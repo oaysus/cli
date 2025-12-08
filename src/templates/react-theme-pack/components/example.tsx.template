@@ -1,0 +1,30 @@
+import React from 'react';
+
+interface {{COMPONENT_NAME}}Props {
+  heading?: string;
+  subheading?: string;
+  buttonText?: string;
+  buttonLink?: string;
+}
+
+export default function {{COMPONENT_NAME}}({
+  heading = 'Welcome',
+  subheading = 'Your amazing tagline',
+  buttonText = 'Get Started',
+  buttonLink = '#'
+}: {{COMPONENT_NAME}}Props) {
+  return (
+    <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-20 px-4">
+      <div className="max-w-4xl mx-auto text-center">
+        <h1 className="text-5xl font-bold mb-4">{heading}</h1>
+        <p className="text-xl mb-8">{subheading}</p>
+        <a
+          href={buttonLink}
+          className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 cursor-pointer"
+        >
+          {buttonText}
+        </a>
+      </div>
+    </div>
+  );
+}

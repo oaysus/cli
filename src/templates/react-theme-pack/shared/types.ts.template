@@ -1,0 +1,19 @@
+/**
+ * Shared TypeScript types for {{DISPLAY_NAME}}
+ */
+
+export interface BaseComponentProps {
+  className?: string;
+  style?: React.CSSProperties;
+}
+
+export interface ButtonProps extends BaseComponentProps {
+  text: string;
+  link: string;
+  variant?: 'primary' | 'secondary';
+}
+
+export interface HeadingProps extends BaseComponentProps {
+  heading: string;
+  subheading?: string;
+}

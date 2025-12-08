@@ -1,0 +1,79 @@
+{
+  "name": "@oaysus/cli",
+  "version": "0.1.0",
+  "description": "Oaysus CLI - Professional developer tool for component uploads",
+  "type": "module",
+  "bin": {
+    "oaysus": "./bin/oaysus.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "bin"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "jest",
+    "prepublishOnly": "bun run build"
+  },
+  "dependencies": {
+    "@sveltejs/vite-plugin-svelte": "6.2.1",
+    "@vitejs/plugin-react": "5.1.1",
+    "@vitejs/plugin-vue": "6.0.2",
+    "archiver": "^7.0.1",
+    "axios": "1.13.2",
+    "boxen": "^8.0.1",
+    "chalk": "5.6.2",
+    "chalk-animation": "^2.0.3",
+    "cli-spinners": "^3.3.0",
+    "commander": "14.0.2",
+    "conf": "^15.0.2",
+    "dotenv": "17.2.3",
+    "figures": "^6.1.0",
+    "form-data": "^4.0.5",
+    "glob": "13.0.0",
+    "gradient-string": "^3.0.0",
+    "ink": "6.5.1",
+    "ink-big-text": "^2.0.0",
+    "ink-box": "^2.0.0",
+    "ink-gradient": "^3.0.0",
+    "ink-link": "^5.0.0",
+    "ink-select-input": "^6.2.0",
+    "ink-spinner": "^5.0.0",
+    "ink-table": "^3.1.0",
+    "ink-text-input": "^6.0.0",
+    "inquirer": "13.0.2",
+    "meow": "^14.0.0",
+    "open": "11.0.0",
+    "ora": "9.0.0",
+    "pastel": "^4.0.0",
+    "react": "19.2.1",
+    "vite": "7.2.6",
+    "vite-plugin-solid": "2.11.10",
+    "zod": "4.1.13"
+  },
+  "devDependencies": {
+    "@types/archiver": "^7.0.0",
+    "@types/form-data": "^2.5.2",
+    "@types/inquirer": "9.0.9",
+    "@types/jest": "30.0.0",
+    "@types/node": "24.10.1",
+    "@types/react": "19.2.7",
+    "ink-testing-library": "^4.0.0",
+    "jest": "30.2.0",
+    "typescript": "5.9.3"
+  },
+  "keywords": [
+    "oaysus",
+    "cli",
+    "components",
+    "developer-tools"
+  ],
+  "author": "Oaysus Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

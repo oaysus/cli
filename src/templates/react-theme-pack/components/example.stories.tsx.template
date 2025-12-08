@@ -1,0 +1,29 @@
+import type { Meta, StoryObj } from '@storybook/react';
+import {{COMPONENT_NAME}} from './index';
+import { schemaToArgTypes, schemaToDefaultArgs } from '../../.storybook/utils/schemaToArgTypes';
+import schema from './schema.json';
+
+const meta: Meta<typeof {{COMPONENT_NAME}}> = {
+  title: '{{CATEGORY}}/{{COMPONENT_NAME}}',
+  component: {{COMPONENT_NAME}},
+  parameters: {
+    layout: 'fullscreen'
+  },
+  argTypes: schemaToArgTypes(schema)
+};
+
+export default meta;
+type Story = StoryObj<typeof {{COMPONENT_NAME}}>;
+
+export const Default: Story = {
+  args: schemaToDefaultArgs(schema)
+};
+
+export const CustomExample: Story = {
+  args: {
+    heading: 'Build Something Amazing',
+    subheading: 'The fastest way to create beautiful, responsive websites',
+    buttonText: 'Start Free Trial',
+    buttonLink: '/signup'
+  }
+};

@@ -1,0 +1,71 @@
+# {{DISPLAY_NAME}}
+
+{{DESCRIPTION}}
+
+## Installation
+
+```bash
+pnpm install
+```
+
+## Components
+
+This theme pack includes the following components:
+
+### Hero
+A hero section component with heading, subheading, and CTA button.
+
+### CTA
+A call-to-action component for conversions.
+
+### Testimonials
+A testimonials section to showcase customer reviews.
+
+## Usage
+
+```tsx
+import Hero from './components/Hero';
+import CTA from './components/CTA';
+import Testimonials from './components/Testimonials';
+
+function App() {
+  return (
+    <>
+      <Hero
+        heading="Welcome"
+        subheading="Build amazing things"
+        buttonText="Get Started"
+        buttonLink="/start"
+      />
+      <Testimonials />
+      <CTA />
+    </>
+  );
+}
+```
+
+## Adding New Components
+
+To add a new component to this theme pack:
+
+```bash
+oaysus create component MyComponent
+```
+
+## Development
+
+This theme pack was created using the Oaysus CLI.
+
+To validate and package for upload:
+
+```bash
+oaysus validate
+```
+
+## Author
+
+{{AUTHOR}}
+
+## License
+
+MIT

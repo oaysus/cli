@@ -1,0 +1,218 @@
+/**
+ * Preview HTML Generator - Vue
+ * Generates a local preview page that mimics the dashboard's preview-shell.html
+ */
+
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const BUILD_DIR = path.join(__dirname, '../.oaysus-build');
+const PREVIEW_DIST = path.join(__dirname, 'dist');
+const OUTPUT_HTML = path.join(PREVIEW_DIST, 'index.html');
+
+// Ensure preview/dist directory exists
+if (!fs.existsSync(PREVIEW_DIST)) {
+  fs.mkdirSync(PREVIEW_DIST, { recursive: true });
+}
+
+// Check if build exists
+if (!fs.existsSync(BUILD_DIR)) {
+  console.error('❌ Error: .oaysus-build directory not found!');
+  console.error('   Run "oaysus build" first to build your components.');
+  process.exit(1);
+}
+
+// Read all components
+const components = [];
+const componentDirs = fs.readdirSync(BUILD_DIR).filter(dir => {
+  const fullPath = path.join(BUILD_DIR, dir);
+  return fs.statSync(fullPath).isDirectory() && dir !== 'deps';
+});
+
+for (const dir of componentDirs) {
+  const schemaPath = path.join(BUILD_DIR, dir, 'schema.json');
+  const jsPath = path.join(BUILD_DIR, dir, 'index.js');
+
+  if (fs.existsSync(schemaPath) && fs.existsSync(jsPath)) {
+    const schema = JSON.parse(fs.readFileSync(schemaPath, 'utf-8'));
+    components.push({
+      name: dir,
+      displayName: schema.displayName || dir,
+      schema,
+      jsPath: `/build/${dir}/index.js`
+    });
+  }
+}
+
+// Read import map
+let importMap = { imports: {} };
+const importMapPath = path.join(BUILD_DIR, 'import-map.json');
+if (fs.existsSync(importMapPath)) {
+  importMap = JSON.parse(fs.readFileSync(importMapPath, 'utf-8'));
+}
+
+// Convert R2 URLs to local URLs
+const localImportMap = { imports: {} };
+for (const [key, value] of Object.entries(importMap.imports)) {
+  // Convert R2 URL to local path
+  // Example: https://r2.dev/.../deps/vue@3.3.4/index.js → /build/deps/vue@3.3.4/index.js
+  const match = value.match(/deps\/(.*)/);
+  if (match) {
+    localImportMap.imports[key] = `/build/deps/${match[1]}`;
+  } else {
+    localImportMap.imports[key] = value;
+  }
+}
+
+// Generate HTML
+const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Component Preview - {{PROJECT_NAME}}</title>
+  <link rel="stylesheet" href="/build/theme.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+</head>
+<body>
+  ${components.map(comp => `<div id="preview-${comp.name}"></div>`).join('\n  ')}
+
+  <!-- Import Map -->
+  <script type="importmap">
+${JSON.stringify(localImportMap, null, 2)}
+  </script>
+
+  <!-- Component Loading Script -->
+  <script type="module">
+    // Component configurations
+    const components = ${JSON.stringify(components, null, 2)};
+
+    // Load Vue
+    let createApp;
+
+    async function loadVue() {
+      try {
+        const vueModule = await import('vue');
+        createApp = vueModule.createApp || vueModule.default?.createApp;
+
+        if (!createApp) {
+          throw new Error('createApp not found in Vue module');
+        }
+
+        console.log('✅ Vue loaded:', vueModule);
+      } catch (error) {
+        console.error('❌ Failed to load Vue:', error);
+        throw error;
+      }
+    }
+
+    // Load and render a Vue component
+    async function loadComponent(comp) {
+      const container = document.getElementById(\`preview-\${comp.name}\`);
+
+      try {
+        console.log(\`Loading component: \${comp.displayName}\`);
+
+        // Import the component module
+        const module = await import(comp.jsPath);
+        console.log(\`✅ Loaded module for \${comp.displayName}:\`, module);
+
+        // Get the component (try default export first, then named)
+        const Component = module.default || module[Object.keys(module)[0]];
+
+        if (!Component) {
+          throw new Error('No component export found in module');
+        }
+
+        console.log(\`✅ Component definition for \${comp.displayName}:\`, Component);
+
+        // Get default props from schema
+        const defaultProps = {};
+        if (comp.schema.props) {
+          for (const [key, prop] of Object.entries(comp.schema.props)) {
+            if (prop.default !== undefined) {
+              defaultProps[key] = prop.default;
+            } else if (prop.type === 'object' && prop.properties) {
+              // Build nested object from properties
+              const nestedObj = {};
+              for (const [nestedKey, nestedProp] of Object.entries(prop.properties)) {
+                if (nestedProp.default !== undefined) {
+                  nestedObj[nestedKey] = nestedProp.default;
+                }
+              }
+              if (Object.keys(nestedObj).length > 0) {
+                defaultProps[key] = nestedObj;
+              }
+            }
+          }
+        }
+
+        console.log(\`📝 Rendering \${comp.displayName} with props:\`, defaultProps);
+
+        // Create Vue app and mount
+        const app = createApp(Component, defaultProps);
+        app.mount(container);
+
+        console.log(\`✅ Successfully rendered \${comp.displayName}\`);
+      } catch (error) {
+        console.error(\`❌ Failed to load \${comp.displayName}:\`, error);
+        container.innerHTML = \`
+          <div class="error">
+            <strong>Error loading \${comp.displayName}:</strong><br>
+            \${error.message}
+          </div>
+        \`;
+      }
+    }
+
+    // Main execution
+    async function main() {
+      try {
+        console.log('🚀 Starting component preview...');
+
+        // Load Vue first
+        await loadVue();
+
+        // Load all components
+        for (const comp of components) {
+          await loadComponent(comp);
+        }
+
+        console.log('✅ All components loaded successfully!');
+      } catch (error) {
+        console.error('❌ Preview failed:', error);
+      }
+    }
+
+    main();
+  </script>
+</body>
+</html>
+`;
+
+// Write HTML file
+fs.writeFileSync(OUTPUT_HTML, html);
+
+console.log(`
+✅ Preview HTML generated successfully!
+
+📁 Location: ${OUTPUT_HTML}
+
+🎯 Components found: ${components.length}
+${components.map(c => `   • ${c.displayName} (${c.name})`).join('\n')}
+
+🚀 Start the preview server with:
+   pnpm run preview:start
+
+   Or run the full preview (generate + serve):
+   pnpm run preview
+`);

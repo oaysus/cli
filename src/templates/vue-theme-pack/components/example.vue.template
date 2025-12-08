@@ -1,0 +1,32 @@
+<template>
+  <div class="bg-gradient-to-r from-orange-500 via-pink-500 to-purple-600 text-white py-24 px-4 min-h-[500px] flex items-center justify-center border-8 border-yellow-400 shadow-2xl">
+    <div class="max-w-4xl mx-auto text-center">
+      <h1 class="text-6xl font-black mb-6 text-white drop-shadow-lg">{{ heading }}</h1>
+      <p class="text-2xl mb-10 text-yellow-200 font-semibold">{{ subheading }}</p>
+      <a
+        :href="buttonLink"
+        class="inline-block bg-gradient-to-r from-green-400 to-cyan-500 text-white px-8 py-4 rounded-full text-xl font-bold shadow-xl hover:scale-110 hover:rotate-2 transition-all duration-300 cursor-pointer no-underline"
+      >
+        {{ buttonText }}
+      </a>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { defineProps, withDefaults } from 'vue';
+
+interface Props {
+  heading?: string;
+  subheading?: string;
+  buttonText?: string;
+  buttonLink?: string;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  heading: 'Welcome',
+  subheading: 'Your amazing tagline',
+  buttonText: 'Get Started',
+  buttonLink: '#'
+});
+</script>

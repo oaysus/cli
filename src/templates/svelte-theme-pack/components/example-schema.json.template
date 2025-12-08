@@ -1,0 +1,24 @@
+{
+  "type": "{{COMPONENT_TYPE}}",
+  "displayName": "{{COMPONENT_NAME}}",
+  "description": "{{DESCRIPTION}}",
+  "category": "{{CATEGORY}}",
+  "props": {
+    "heading": {
+      "type": "string",
+      "default": "Welcome"
+    },
+    "subheading": {
+      "type": "string",
+      "default": "Your amazing tagline"
+    },
+    "buttonText": {
+      "type": "string",
+      "default": "Get Started"
+    },
+    "buttonLink": {
+      "type": "string",
+      "default": "#"
+    }
+  }
+}

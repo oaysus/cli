@@ -1,0 +1,40 @@
+/**
+ * Local Preview Server
+ * Serves the built components for local testing without uploading to R2
+ */
+
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const app = express();
+const PORT = 4000;
+
+// Serve .oaysus-build directory (component bundles and dependencies)
+app.use('/build', express.static(path.join(__dirname, '../.oaysus-build')));
+
+// Serve preview directory (HTML and assets)
+app.use(express.static(path.join(__dirname, 'dist')));
+
+// Handle 404s
+app.use((req, res) => {
+  res.status(404).send('File not found');
+});
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`
+╔════════════════════════════════════════════════════════════╗
+║                                                            ║
+║  🎨  Component Preview Server                              ║
+║                                                            ║
+║  Running at: http://localhost:${PORT}                          ║
+║                                                            ║
+║  Press Ctrl+C to stop the server                          ║
+║                                                            ║
+╚════════════════════════════════════════════════════════════╝
+  `);
+});
