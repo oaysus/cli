@@ -11,6 +11,7 @@ import { requireAuth } from './shared/auth.js';
 import { validatePackage } from './validator.js';
 import { uploadBuildFilesToR2 } from './shared/uploader.js';
 import { buildR2Path } from './shared/path-builder.js';
+import { R2_PUBLIC_URL } from './shared/config.js';
 import { detectFramework, getBuilder, getBundler, getImportMapGenerator } from './core/framework-registry.js';
 import { analyzeComponentImports, type DetectedDependency } from './shared/import-analyzer.js';
 
@@ -199,11 +200,10 @@ export async function push(options: PushOptions = {}): Promise<PushResult> {
     logSuccess('Generated theme manifest', silent);
 
     // Step 9: Generate import map (includes detected deps)
-    const r2PublicUrl = process.env.NEXT_PUBLIC_R2_PUBLIC_URL || 'https://pub-71eb20e9b97849f18a95eaa92feb648a.r2.dev';
     const r2BasePath = buildR2Path(validationResult.packageJson, credentials);
 
     const importMapWithStyles = importMapGen.generateImportMapWithStylesheets(validationResult.packageJson, {
-      r2PublicUrl,
+      r2PublicUrl: R2_PUBLIC_URL,
       r2BasePath,
       detectedDeps // Pass detected deps for import map generation
     });

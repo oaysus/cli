@@ -3,27 +3,18 @@
  * Constructs environment-aware R2 paths for component theme uploads
  */
 
-import path from 'path';
-import dotenv from 'dotenv';
-import { fileURLToPath } from 'url';
 import type { PackageJson } from '../../types/validation.js';
 import type { Credentials } from '../../types/index.js';
+import { getEnvironment, DEVELOPER } from './config.js';
 
-// Get __dirname equivalent in ESM
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Load environment variables from monorepo env file
-const envPath = path.join(__dirname, '../../../config/env/.env.personal.oaysus');
-dotenv.config({ path: envPath });
-
-export type Environment = 'local' | 'dev' | 'prod';
+// Re-export Environment type from config
+export type { Environment } from './config.js';
 
 /**
  * Metadata for upload paths and tracking
  */
 export interface UploadMetadata {
-  environment: Environment;
+  environment: 'local' | 'dev' | 'prod';
   developer?: string;
   websiteId: string;
   themeName: string;
@@ -33,20 +24,6 @@ export interface UploadMetadata {
   importMap?: Record<string, any>;
   stylesheets?: Record<string, string>;
   dependencies?: Array<{ name: string; version: string }>;
-}
-
-/**
- * Get current deployment environment
- */
-export function getEnvironment(): Environment {
-  const stage = process.env.NEXT_PUBLIC_API_STAGE;
-
-  if (stage === 'local') return 'local';
-  if (stage === 'dev') return 'dev';
-  if (stage === 'prod' || stage === 'production') return 'prod';
-
-  // Fallback based on NODE_ENV
-  return process.env.NODE_ENV === 'production' ? 'prod' : 'local';
 }
 
 /**
@@ -73,7 +50,7 @@ export function buildR2Path(
 
   // Local environment includes developer namespace
   if (env === 'local') {
-    const developer = process.env.DEVELOPER || 'unknown';
+    const developer = DEVELOPER || 'unknown';
     return `local/${developer}/${websiteId}/${themeName}/${version}`;
   }
 
@@ -100,7 +77,7 @@ export function buildUploadMetadata(
 
   return {
     environment: env,
-    developer: env === 'local' ? process.env.DEVELOPER : undefined,
+    developer: env === 'local' ? DEVELOPER : undefined,
     websiteId: credentials.websiteId,
     themeName,
     displayName,
@@ -124,7 +101,7 @@ export function getThemeBasePath(
   const themeName = packageJson.oaysus?.theme?.name || packageJson.name;
 
   if (env === 'local') {
-    const developer = process.env.DEVELOPER || 'unknown';
+    const developer = DEVELOPER || 'unknown';
     return `local/${developer}/${websiteId}/${themeName}`;
   }
 

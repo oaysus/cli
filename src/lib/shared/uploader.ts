@@ -8,21 +8,10 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import FormData from 'form-data';
-import dotenv from 'dotenv';
-import { fileURLToPath } from 'url';
 import { loadCredentials } from './auth.js';
 import { buildUploadMetadata } from './path-builder.js';
+import { SSO_BASE_URL } from './config.js';
 import type { ValidationResult, PackageJson } from '../../types/validation.js';
-
-// Get __dirname equivalent in ESM
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Load environment variables from monorepo env file
-const envPath = path.join(__dirname, '../../../config/env/.env.personal.oaysus');
-dotenv.config({ path: envPath });
-
-const SSO_BASE_URL = process.env.NEXT_PUBLIC_OAYSUS_SSO_URL || 'https://auth.oaysus.com';
 
 /**
  * Upload result from server
@@ -175,23 +164,6 @@ export async function uploadPackageToR2(
   // 7. Prepare request config
   const uploadUrl = `${SSO_BASE_URL}/sso/cli/component/upload?hash=${hash}`;
 
-  // Debug logging to file
-  const debugInfo = `
-=== UPLOAD DEBUG ===
-Time: ${new Date().toISOString()}
-Upload URL: ${uploadUrl}
-SSO_BASE_URL: ${SSO_BASE_URL}
-File size: ${fileSize} bytes
-File path: ${zipPath}
-Hash: ${hash}
-R2 Path: ${uploadMetadata.r2Path}
-Environment: ${uploadMetadata.environment}
-Developer: ${uploadMetadata.developer || 'N/A'}
-Theme: ${uploadMetadata.themeName} v${uploadMetadata.version}
-==================
-`;
-  fs.writeFileSync('/tmp/oaysus-cli-upload-debug.log', debugInfo, { flag: 'a' });
-
   const config = {
     method: 'POST',
     url: uploadUrl,
@@ -215,33 +187,8 @@ Theme: ${uploadMetadata.themeName} v${uploadMetadata.version}
   // 8. Upload file
   try {
     const response = await axios(config);
-
-    // Debug log successful response
-    const successDebug = `
-=== UPLOAD SUCCESS ===
-Time: ${new Date().toISOString()}
-Status: ${response.status}
-Response data: ${JSON.stringify(response.data, null, 2)}
-=====================
-`;
-    fs.writeFileSync('/tmp/oaysus-cli-upload-debug.log', successDebug, { flag: 'a' });
-
     return response.data as UploadResult;
   } catch (error: any) {
-    // Debug log error details
-    if (axios.isAxiosError(error)) {
-      const errorDebug = `
-=== UPLOAD ERROR ===
-Time: ${new Date().toISOString()}
-Status: ${error.response?.status}
-Error data: ${JSON.stringify(error.response?.data, null, 2)}
-Error message: ${error.message}
-Error code: ${error.code}
-====================
-`;
-      fs.writeFileSync('/tmp/oaysus-cli-upload-debug.log', errorDebug, { flag: 'a' });
-    }
-
     // Handle specific error cases
     if (axios.isAxiosError(error)) {
       const status = error.response?.status;
@@ -470,20 +417,6 @@ export async function uploadBuildFilesToR2(
   // 9. Upload URL
   const uploadUrl = `${SSO_BASE_URL}/sso/cli/component/upload-files`;
 
-  // Debug logging
-  const debugInfo = `
-=== UPLOAD FILES DEBUG ===
-Time: ${new Date().toISOString()}
-Upload URL: ${uploadUrl}
-Files: ${files.length}
-Total size: ${totalSize} bytes
-R2 Path: ${uploadMetadata.r2Path}
-Environment: ${uploadMetadata.environment}
-Theme: ${uploadMetadata.themeName} v${uploadMetadata.version}
-==========================
-`;
-  fs.writeFileSync('/tmp/oaysus-cli-upload-debug.log', debugInfo, { flag: 'a' });
-
   // 10. Upload
   try {
     const response = await axios({
@@ -506,32 +439,8 @@ Theme: ${uploadMetadata.themeName} v${uploadMetadata.version}
       }
     });
 
-    // Debug log successful response
-    const successDebug = `
-=== UPLOAD FILES SUCCESS ===
-Time: ${new Date().toISOString()}
-Status: ${response.status}
-Response data: ${JSON.stringify(response.data, null, 2)}
-============================
-`;
-    fs.writeFileSync('/tmp/oaysus-cli-upload-debug.log', successDebug, { flag: 'a' });
-
     return response.data as UploadResult;
   } catch (error: any) {
-    // Debug log error details
-    if (axios.isAxiosError(error)) {
-      const errorDebug = `
-=== UPLOAD ERROR ===
-Time: ${new Date().toISOString()}
-Status: ${error.response?.status}
-Error data: ${JSON.stringify(error.response?.data, null, 2)}
-Error message: ${error.message}
-Error code: ${error.code}
-====================
-`;
-      fs.writeFileSync('/tmp/oaysus-cli-upload-debug.log', errorDebug, { flag: 'a' });
-    }
-
     // Handle specific error cases
     if (axios.isAxiosError(error)) {
       const status = error.response?.status;

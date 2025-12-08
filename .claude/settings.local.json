@@ -5,7 +5,11 @@
       "Bash(git branch:*)",
       "Bash(git remote add:*)",
       "Bash(git add:*)",
-      "Bash(git commit -m \"$(cat <<''EOF''\nInitial commit: Oaysus CLI\n\n- TypeScript CLI built with Ink (React for CLIs)\n- Multi-framework support (React, Vue, Svelte) via plugin architecture\n- Commands: init, create, validate, build, push, login/logout/whoami\n- ESM component builds with import map generation\n- R2 upload integration\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")"
+      "Bash(git commit -m \"$(cat <<''EOF''\nInitial commit: Oaysus CLI\n\n- TypeScript CLI built with Ink (React for CLIs)\n- Multi-framework support (React, Vue, Svelte) via plugin architecture\n- Commands: init, create, validate, build, push, login/logout/whoami\n- ESM component builds with import map generation\n- R2 upload integration\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(bun add:*)",
+      "Bash(NODE_OPTIONS='--experimental-vm-modules' bunx jest:*)",
+      "Bash(bunx tsc:*)",
+      "Bash(bun run test:*)"
     ],
     "deny": [],
     "ask": []

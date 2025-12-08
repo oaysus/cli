@@ -11,6 +11,7 @@ import type { Credentials } from '../types/index.js';
 import { validatePackage } from '../lib/validator.js';
 import { uploadBuildFilesToR2, UploadError } from '../lib/shared/uploader.js';
 import { buildR2Path } from '../lib/shared/path-builder.js';
+import { R2_PUBLIC_URL } from '../lib/shared/config.js';
 import { detectFramework, getBuilder, getBundler, getImportMapGenerator } from '../lib/core/framework-registry.js';
 import type { ComponentBuildOutput } from '../lib/core/types.js';
 import { analyzeComponentImports, type DetectedDependency } from '../lib/shared/import-analyzer.js';
@@ -476,15 +477,12 @@ export function PushScreen({
         // Step 6: Generate import map with R2 URLs
         if (isCancelled) return;
 
-        // Get R2 public URL from environment
-        const r2PublicUrl = process.env.NEXT_PUBLIC_R2_PUBLIC_URL || 'https://pub-71eb20e9b97849f18a95eaa92feb648a.r2.dev';
-
         // Build R2 base path for this theme
         const r2BasePath = buildR2Path(validationResult.packageJson, credentials);
 
         // Generate import map with R2 URLs and stylesheets (including detected deps)
         const importMapWithStyles = importMapGen.generateImportMapWithStylesheets(validationResult.packageJson, {
-          r2PublicUrl,
+          r2PublicUrl: R2_PUBLIC_URL,
           r2BasePath,
           detectedDeps
         });

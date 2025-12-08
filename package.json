@@ -15,8 +15,20 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "test": "jest",
-    "prepublishOnly": "bun run build"
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
+    "test:coverage": "NODE_OPTIONS='--experimental-vm-modules' jest --coverage",
+    "prepublishOnly": "bun run build && bun run test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oaysus/cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/oaysus/cli/issues"
+  },
+  "homepage": "https://oaysus.com",
+  "publishConfig": {
+    "access": "public"
   },
   "dependencies": {
     "@sveltejs/vite-plugin-svelte": "6.2.1",
@@ -55,6 +67,7 @@
     "zod": "4.1.13"
   },
   "devDependencies": {
+    "@jest/globals": "^30.2.0",
     "@types/archiver": "^7.0.0",
     "@types/form-data": "^2.5.2",
     "@types/inquirer": "9.0.9",
@@ -63,6 +76,7 @@
     "@types/react": "19.2.7",
     "ink-testing-library": "^4.0.0",
     "jest": "30.2.0",
+    "ts-jest": "^29.4.6",
     "typescript": "5.9.3"
   },
   "keywords": [

@@ -1,57 +1,17 @@
 import axios from 'axios';
 import fs from 'fs/promises';
-import * as fsSync from 'fs';
 import path from 'path';
 import os from 'os';
 import crypto from 'crypto';
-import dotenv from 'dotenv';
-import { fileURLToPath } from 'url';
 import type { Credentials, DeviceCodeResponse, DeviceStatusResponse } from '../../types/index.js';
-
-// Get __dirname equivalent in ESM
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Load environment variables from monorepo env file
-// Use absolute path from monorepo root
-// From dist/lib/shared/ we need to go up 4 levels to reach mono/ root
-const monoRepoRoot = path.resolve(__dirname, '../../../../');
-const envPath = path.join(monoRepoRoot, 'config/env/.env.personal.oaysus');
-
-// Try to load env file, but don't fail if it doesn't exist (for production)
-try {
-  if (fsSync.existsSync(envPath)) {
-    dotenv.config({ path: envPath });
-  }
-} catch (error) {
-  // Silently ignore env loading errors in production
-}
-
-// Debug logging toggle - set to false to hide debug output
-const DEBUG = false;
-
-const SSO_BASE_URL = process.env.NEXT_PUBLIC_OAYSUS_SSO_URL || 'https://auth.oaysus.com';
-const CREDENTIALS_PATH = path.join(os.homedir(), '.oaysus', 'credentials.json');
-
-function log(...args: any[]) {
-  if (DEBUG) {
-    console.log(...args);
-  }
-}
-
-function logError(...args: any[]) {
-  if (DEBUG) {
-    console.error(...args);
-  }
-}
+import { SSO_BASE_URL, ADMIN_URL, CREDENTIALS_PATH, debug as log, debugError as logError } from './config.js';
 
 /**
  * Request magic link for email authentication with device code
  */
 export async function requestMagicLink(email: string, deviceCode: string): Promise<void> {
   const url = `${SSO_BASE_URL}/sso/customer/auth/magic-link`;
-  const dashboardUrl = process.env.NEXT_PUBLIC_OAYSUS_ADMIN_URL || 'http://local-admin.oaysus.com';
-  const redirectUrl = `${dashboardUrl}/device?code=${deviceCode}`;
+  const redirectUrl = `${ADMIN_URL}/device?code=${deviceCode}`;
 
   log('[DEBUG] Requesting magic link');
   log('[DEBUG] API URL:', url);
