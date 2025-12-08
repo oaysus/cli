@@ -13,7 +13,10 @@
       "Bash(cat:*)",
       "Bash(npm link)",
       "Bash(oaysus --help:*)",
-      "Bash(node -e:*)"
+      "Bash(node -e:*)",
+      "Bash(DEBUG=true oaysus push:*)",
+      "Bash(bun run build)",
+      "Bash(DEBUG=true oaysus:*)"
     ],
     "deny": [],
     "ask": []

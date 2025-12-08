@@ -10,7 +10,7 @@ import crypto from 'crypto';
 import FormData from 'form-data';
 import { loadCredentials } from './auth.js';
 import { buildUploadMetadata } from './path-builder.js';
-import { SSO_BASE_URL } from './config.js';
+import { SSO_BASE_URL, debug } from './config.js';
 import type { ValidationResult, PackageJson } from '../../types/validation.js';
 
 /**
@@ -416,6 +416,8 @@ export async function uploadBuildFilesToR2(
 
   // 9. Upload URL
   const uploadUrl = `${SSO_BASE_URL}/sso/cli/component/upload-files`;
+  debug('Upload URL:', uploadUrl);
+  debug('SSO_BASE_URL:', SSO_BASE_URL);
 
   // 10. Upload
   try {
@@ -453,8 +455,10 @@ export async function uploadBuildFilesToR2(
           401
         );
       } else if (status === 403) {
+        debug('403 Error - Response data:', errorData);
+        debug('403 Error - Request URL:', uploadUrl);
         throw new UploadError(
-          'Access forbidden. Your authentication may have expired. Try: oaysus logout && oaysus login',
+          `Upload failed: ${errorData?.error || errorData?.message || 'Access forbidden'}. Your authentication may have expired. Try: oaysus logout && oaysus login`,
           'FORBIDDEN',
           403
         );
