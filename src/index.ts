@@ -5,7 +5,12 @@
  * Modern CLI built with Ink (React for CLIs)
  */
 
-import { runCli } from './cli.js';
+// Load .env.local BEFORE any other imports (must use dynamic import)
+import dotenv from 'dotenv';
+dotenv.config({ path: '.env.local', quiet: true });
+
+// Dynamic import to ensure env vars are loaded first
+const { runCli } = await import('./cli.js');
 
 // Start the CLI
 runCli().catch((error) => {

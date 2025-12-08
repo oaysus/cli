@@ -48,29 +48,27 @@ node bin/oaysus.js <command>
 
 ## Environment Variables
 
-For local development against non-production servers, create a `.env` file in the project root:
+For local development, create a `.env.local` file in the project root. This file is gitignored and will not be committed. Without a `.env.local` file, the CLI uses production defaults.
 
-```env
-# Authentication server (default: https://auth.oaysus.com)
-NEXT_PUBLIC_OAYSUS_SSO_URL=http://localhost:3000
+## Contribution Scope
 
-# Admin dashboard URL for magic link redirects (default: https://admin.oaysus.com)
-NEXT_PUBLIC_OAYSUS_ADMIN_URL=http://localhost:3001
+### What You Can Contribute
 
-# R2 CDN URL (default: production CDN)
-NEXT_PUBLIC_R2_PUBLIC_URL=http://localhost:9000
+We welcome contributions in the following areas:
 
-# Environment: 'prod' | 'dev' | 'local'
-NEXT_PUBLIC_API_STAGE=local
+- **CLI User Experience** - Screen layouts, UI components (`src/screens/`, `src/components/`), error messages, help text
+- **CLI Functionality** - New commands, input validation, configuration handling, local build processes
+- **Testing & Documentation** - Unit tests, integration tests, documentation improvements
 
-# Developer namespace for local R2 paths
-DEVELOPER=your-name
+### What Requires Team Coordination
 
-# Enable debug logging
-DEBUG=true
-```
+The following areas involve backend services and require coordination with the Oaysus team **before** implementation:
 
-See `.env.example` for a template.
+- **Authentication Flow** - Changes to login/logout, token handling, or credential storage
+- **API Integration** - New API endpoints, request/response formats, or upload flows
+- **Storage & CDN** - R2 uploads, import map generation, or CDN path changes
+
+If you'd like to contribute to these areas, please [open an issue](https://github.com/oaysus/cli/issues) first to discuss the proposed changes.
 
 ## Architecture Overview
 

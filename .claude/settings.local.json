@@ -9,7 +9,11 @@
       "Bash(bun add:*)",
       "Bash(NODE_OPTIONS='--experimental-vm-modules' bunx jest:*)",
       "Bash(bunx tsc:*)",
-      "Bash(bun run test:*)"
+      "Bash(bun run test:*)",
+      "Bash(cat:*)",
+      "Bash(npm link)",
+      "Bash(oaysus --help:*)",
+      "Bash(node -e:*)"
     ],
     "deny": [],
     "ask": []
