@@ -1,13 +1,10 @@
 /**
  * Centralized Configuration Module
  *
- * Production defaults are baked in for end users (NPM and Homebrew).
+ * Production defaults are baked in for end users.
  * Contributors can override via environment variables or .env file.
  *
- * Compatible with:
- * - NPM global install: npm install -g @oaysus/cli
- * - Homebrew: brew install oaysus
- * - Local development: bun run dev
+ * Install: npm install -g @oaysus/cli
  */
 
 import os from 'os';
@@ -41,7 +38,7 @@ export const config = {
   // Debug mode (console logging, off by default)
   DEBUG: process.env.DEBUG === 'true',
 
-  // Credentials storage path (works for both NPM and Homebrew)
+  // Credentials storage path
   CREDENTIALS_PATH: path.join(os.homedir(), '.oaysus', 'credentials.json'),
 
   // Config directory
