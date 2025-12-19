@@ -4,7 +4,61 @@ import path from 'path';
 import os from 'os';
 import crypto from 'crypto';
 import type { Credentials, DeviceCodeResponse, DeviceStatusResponse } from '../../types/index.js';
-import { SSO_BASE_URL, ADMIN_URL, CREDENTIALS_PATH, debug as log, debugError as logError } from './config.js';
+import { SSO_BASE_URL, ADMIN_URL, CREDENTIALS_PATH, IS_LOCAL_DEV, debug as log, debugError as logError } from './config.js';
+
+/**
+ * Format a friendly error message for API errors
+ */
+function formatApiError(error: unknown, context: string): Error {
+  if (axios.isAxiosError(error)) {
+    const status = error.response?.status;
+    const data = error.response?.data;
+
+    // Connection refused - server not running
+    if (error.code === 'ECONNREFUSED') {
+      const serverUrl = IS_LOCAL_DEV ? 'localhost:3003' : 'auth.oaysus.com';
+      return new Error(
+        `Cannot connect to ${serverUrl}. ${IS_LOCAL_DEV ? 'Is your local FastAPI server running?' : 'Please check your internet connection.'}`
+      );
+    }
+
+    // 500 errors - server-side issue
+    if (status === 500) {
+      const detail = data?.detail?.error || data?.error || data?.message;
+      return new Error(
+        `Server error during ${context}. ${detail ? `Details: ${detail}` : 'Please try again or contact support.'}`
+      );
+    }
+
+    // 401/403 - auth issues
+    if (status === 401 || status === 403) {
+      return new Error(data?.message || data?.error || 'Authentication failed. Please try again.');
+    }
+
+    // 404 - endpoint not found
+    if (status === 404) {
+      return new Error(
+        IS_LOCAL_DEV
+          ? `API endpoint not found. Make sure your local server is running the latest code.`
+          : `Service temporarily unavailable. Please try again later.`
+      );
+    }
+
+    // Other errors with messages
+    const message = data?.message || data?.error || data?.detail?.error;
+    if (message) {
+      return new Error(message);
+    }
+
+    return new Error(`Request failed with status ${status || 'unknown'}`);
+  }
+
+  if (error instanceof Error) {
+    return error;
+  }
+
+  return new Error('An unexpected error occurred');
+}
 
 /**
  * Request magic link for email authentication with device code
@@ -33,13 +87,12 @@ export async function requestMagicLink(email: string, deviceCode: string): Promi
 
     throw new Error(response.data.message || 'Failed to send magic link');
   } catch (error) {
+    logError('[ERROR] Magic link request failed');
     if (axios.isAxiosError(error)) {
-      logError('[ERROR] Magic link request failed');
       logError('[ERROR] Status:', error.response?.status);
       logError('[ERROR] Response:', error.response?.data);
-      throw new Error(error.response?.data?.message || 'Failed to send magic link');
     }
-    throw error;
+    throw formatApiError(error, 'magic link request');
   }
 }
 
@@ -90,14 +143,13 @@ export async function initializeDevice(): Promise<DeviceCodeResponse> {
 
     return response.data;
   } catch (error) {
+    logError('[ERROR] Device init failed');
+    logError('[ERROR] URL:', url);
     if (axios.isAxiosError(error)) {
-      logError('[ERROR] Request failed');
-      logError('[ERROR] URL:', url);
       logError('[ERROR] Status:', error.response?.status);
       logError('[ERROR] Response:', error.response?.data);
-      logError('[ERROR] Message:', error.message);
     }
-    throw error;
+    throw formatApiError(error, 'device initialization');
   }
 }
 
@@ -160,6 +212,9 @@ export async function pollForAuth(
 
       const data = response.data;
 
+      log('[DEBUG] Poll response status:', data.status);
+      log('[DEBUG] Poll response data:', JSON.stringify(data, null, 2));
+
       // Device approved but needs website selection
       if (data.status === 'approved' && data.needsWebsiteSelection && data.websites) {
         log('[DEBUG] Device approved - needs website selection');
@@ -197,8 +252,17 @@ export async function pollForAuth(
       await new Promise(resolve => setTimeout(resolve, options.interval));
 
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 404) {
-        throw new Error('Authorization request not found or expired');
+      if (axios.isAxiosError(error)) {
+        logError('[ERROR] Poll request failed');
+        logError('[ERROR] Status:', error.response?.status);
+        logError('[ERROR] Response:', error.response?.data);
+
+        if (error.response?.status === 404) {
+          throw new Error('Authorization request not found or expired');
+        }
+        if (error.response?.status === 500) {
+          logError('[ERROR] Server error - check FastAPI logs');
+        }
       }
       if (error instanceof Error && error.message.includes('denied')) {
         throw error;
