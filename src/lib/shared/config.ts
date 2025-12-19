@@ -65,8 +65,14 @@ function findCliRoot(): string {
 /**
  * Load .env.local if it exists
  * Returns true if .env.local was found and loaded
+ * Skipped during test runs to ensure predictable test behavior
  */
 function loadEnvLocal(): boolean {
+  // Skip loading .env.local during tests
+  if (process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined) {
+    return false;
+  }
+
   const cliRoot = findCliRoot();
   const envLocalPath = path.join(cliRoot, '.env.local');
 
