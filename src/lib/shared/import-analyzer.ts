@@ -183,7 +183,7 @@ export function analyzeComponentImports(
   componentPaths: string[],
   packageJson: any
 ): DetectedDependency[] {
-  console.log('[ImportAnalyzer] Starting analysis of', componentPaths.length, 'components');
+  // console.log('[ImportAnalyzer] Starting analysis of', componentPaths.length, 'components');
   const allImports = new Map<string, Set<string>>(); // packageName -> Set of full import paths
 
   // Get all dependencies from package.json
@@ -191,7 +191,7 @@ export function analyzeComponentImports(
     ...packageJson.dependencies,
     ...packageJson.peerDependencies
   };
-  console.log('[ImportAnalyzer] Package deps:', Object.keys(deps || {}).slice(0, 10).join(', '));
+  // console.log('[ImportAnalyzer] Package deps:', Object.keys(deps || {}).slice(0, 10).join(', '));
 
   // Read and analyze each component file
   for (const componentPath of componentPaths) {
@@ -248,11 +248,11 @@ export function analyzeComponentImports(
         }
       }
     } catch (error) {
-      console.warn(`[ImportAnalyzer] Could not analyze ${componentPath}:`, error);
+      // console.warn(`[ImportAnalyzer] Could not analyze ${componentPath}:`, error);
     }
   }
 
-  console.log('[ImportAnalyzer] External packages found:', Array.from(allImports.keys()).join(', ') || 'none');
+  // console.log('[ImportAnalyzer] External packages found:', Array.from(allImports.keys()).join(', ') || 'none');
 
   // Convert to DetectedDependency array
   const detected: DetectedDependency[] = [];

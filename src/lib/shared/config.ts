@@ -77,7 +77,8 @@ function loadEnvLocal(): boolean {
   const envLocalPath = path.join(cliRoot, '.env.local');
 
   if (fs.existsSync(envLocalPath)) {
-    dotenv.config({ path: envLocalPath });
+    // @ts-ignore - quiet option to suppress logs
+    dotenv.config({ path: envLocalPath, quiet: true });
     return true;
   }
 

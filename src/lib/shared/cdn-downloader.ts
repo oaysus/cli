@@ -45,7 +45,7 @@ export async function downloadFrameworkDependency(
   const baseUrl = `https://esm.sh/${packageName}@${version}`;
   const files: DownloadedDependency['files'] = [];
 
-  console.log(`Downloading ${packageName}@${version} from esm.sh...`);
+  // console.log(`Downloading ${packageName}@${version} from esm.sh...`);
 
   // Download main export
   try {
@@ -111,7 +111,7 @@ export function saveDownloadedDependency(
     fs.writeFileSync(filePath, file.content);
   }
 
-  console.log(`Saved ${dependency.name}@${dependency.version} (${dependency.files.length} files)`);
+  // console.log(`Saved ${dependency.name}@${dependency.version} (${dependency.files.length} files)`);
 }
 
 /**

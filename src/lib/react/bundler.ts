@@ -250,7 +250,7 @@ class ReactBundler implements IBundler {
     const results: BundledDependency[] = [];
 
     for (const dep of dependencies) {
-      console.log(`Bundling ${dep.name}@${dep.version}...`);
+      // console.log(`Bundling ${dep.name}@${dep.version}...`);
       const bundled = await this.bundleSingleDependency(dep.name, dep.version, options);
       results.push(bundled);
     }
@@ -535,7 +535,7 @@ class ReactBundler implements IBundler {
     const results: BundledDependency[] = [];
 
     for (const dep of detectedDeps) {
-      console.log(`Bundling ${dep.name}@${dep.version}...`);
+      // console.log(`Bundling ${dep.name}@${dep.version}...`);
       const bundled = await this.bundleExternalDependency(dep, options);
       results.push(bundled);
     }

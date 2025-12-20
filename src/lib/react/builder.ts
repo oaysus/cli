@@ -137,7 +137,7 @@ class ReactBuilder implements IBuilder {
     };
 
     if (!deps.tailwindcss) {
-      console.log('[ReactBuilder] No Tailwind dependency found, skipping CSS build');
+      // console.log('[ReactBuilder] No Tailwind dependency found, skipping CSS build');
       return null;
     }
 
@@ -151,7 +151,7 @@ class ReactBuilder implements IBuilder {
     const hasTailwindConfig = fs.existsSync(tailwindConfigPath) || fs.existsSync(tailwindConfigTsPath);
 
     if (!isV4 && !hasTailwindConfig) {
-      console.log('[ReactBuilder] No tailwind.config found, skipping CSS build');
+      // console.log('[ReactBuilder] No tailwind.config found, skipping CSS build');
       return null;
     }
 
@@ -170,7 +170,7 @@ class ReactBuilder implements IBuilder {
 
       const themeCssPath = path.join(outputDir, 'theme.css');
 
-      console.log(`[ReactBuilder] Building Tailwind CSS (v${isV4 ? '4' : '3'})...`);
+      // console.log(`[ReactBuilder] Building Tailwind CSS (v${isV4 ? '4' : '3'})...`);
 
       // Get Tailwind binary
       let tailwindBin: string;
@@ -181,7 +181,7 @@ class ReactBuilder implements IBuilder {
         if (fs.existsSync(v4CliPackage)) {
           tailwindBin = v4CliBin;
         } else {
-          console.log('[ReactBuilder] Installing @tailwindcss/cli for Tailwind v4...');
+          // console.log('[ReactBuilder] Installing @tailwindcss/cli for Tailwind v4...');
           execSync('npm install --save-dev @tailwindcss/cli', {
             cwd: projectPath,
             stdio: 'pipe'
@@ -210,7 +210,7 @@ class ReactBuilder implements IBuilder {
       // Get file size
       const size = fs.existsSync(themeCssPath) ? fs.statSync(themeCssPath).size : 0;
 
-      console.log(`[ReactBuilder] Theme CSS built: ${(size / 1024).toFixed(2)} KB`);
+      // console.log(`[ReactBuilder] Theme CSS built: ${(size / 1024).toFixed(2)} KB`);
 
       return {
         cssPath: themeCssPath,
