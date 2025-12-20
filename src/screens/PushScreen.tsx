@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Box, Text, useInput } from 'ink';
 import path from 'path';
 import fs from 'fs';
@@ -9,7 +9,7 @@ import { ErrorMessage } from '../components/ErrorMessage.js';
 import { requireAuth, loadCredentials } from '../lib/shared/auth.js';
 import type { Credentials } from '../types/index.js';
 import { validatePackage } from '../lib/validator.js';
-import { uploadBuildFilesToR2, UploadError } from '../lib/shared/uploader.js';
+import { uploadBuildFilesToR2Streaming, UploadError } from '../lib/shared/uploader.js';
 import { buildR2Path } from '../lib/shared/path-builder.js';
 import { R2_PUBLIC_URL } from '../lib/shared/config.js';
 import { detectFramework, getBuilder, getBundler, getImportMapGenerator } from '../lib/core/framework-registry.js';
@@ -55,6 +55,9 @@ export function PushScreen({
   const [themePackId, setThemePackId] = useState<string>('');
   const [componentCount, setComponentCount] = useState<number>(0);
   const [builtComponents, setBuiltComponents] = useState<ComponentBuildOutput[]>([]);
+  const [uploadFileCount, setUploadFileCount] = useState<number>(0);
+  const uploadFileCountRef = useRef<number>(0);
+  const totalBytesRef = useRef<number>(0);
   const [appData, setAppData] = useState({
     version: '0.1.0',
     userEmail: null as string | null,
@@ -292,7 +295,7 @@ export function PushScreen({
 
         addEntry({
           type: 'success',
-          content: `✓ Built ${buildResult.components.length} component${buildResult.components.length !== 1 ? 's' : ''} (${(buildResult.totalSize / 1024).toFixed(1)} KB)`,
+          content: `✓ Built ${buildResult.components.length} component${buildResult.components.length !== 1 ? 's' : ''}`,
           color: 'green'
         });
 
@@ -319,7 +322,7 @@ export function PushScreen({
         if (serverBuildResult.success) {
           addEntry({
             type: 'success',
-            content: `✓ Built ${serverBuildResult.components.length} server component${serverBuildResult.components.length !== 1 ? 's' : ''} (${(serverBuildResult.totalSize / 1024).toFixed(1)} KB)`,
+            content: `✓ Built ${serverBuildResult.components.length} server component${serverBuildResult.components.length !== 1 ? 's' : ''}`,
             color: 'green'
           });
         } else {
@@ -427,7 +430,7 @@ export function PushScreen({
           const serverDepSize = serverDeps.reduce((sum, d) => sum + d.size, 0);
           addEntry({
             type: 'success',
-            content: `✓ Bundled server dependencies (${(serverDepSize / 1024).toFixed(1)} KB)`,
+            content: `✓ Bundled server dependencies`,
             color: 'green'
           });
         }
@@ -503,13 +506,13 @@ export function PushScreen({
           color: 'green'
         });
 
-        // Step 7: Upload individual build files to R2
+        // Step 7: Upload individual build files to R2 (with streaming progress)
         if (isCancelled) return;
         setScreen('uploading');
 
         addEntry({
           type: 'spinner',
-          content: `Uploading to server...`,
+          content: `Preparing upload...`,
           color: 'cyan',
           spinnerId: 'uploading'
         });
@@ -521,45 +524,59 @@ export function PushScreen({
           version: version as string
         }));
 
-        const uploadResult = await uploadBuildFilesToR2(
+        const uploadResult = await uploadBuildFilesToR2Streaming(
           buildResult.outputDir,
           validationResult.packageJson,
-          (bytesUploaded, totalBytes, pct) => {
-            setBytesUploaded(bytesUploaded);
-            setTotalBytes(totalBytes);
-            setPercentage(pct);
+          (file, current, total) => {
+            // Update spinner with current file being uploaded
+            removeEntry('uploading');
+            addEntry({
+              type: 'spinner',
+              content: `Uploading ${file}... (${current}/${total})`,
+              color: 'cyan',
+              spinnerId: 'uploading'
+            });
 
-            // When upload reaches 100%, switch to processing state
-            if (pct >= 100 && screen !== 'processing') {
-              setScreen('processing');
-              removeEntry('uploading');
-              addEntry({
-                type: 'success',
-                content: `✓ Uploaded (${(totalBytes / (1024 * 1024)).toFixed(1)} MB)`,
-                color: 'green'
-              });
-              addEntry({
-                type: 'spinner',
-                content: `Processing components on server...`,
-                color: 'cyan',
-                spinnerId: 'server-processing'
-              });
-            }
+            // Store file count for final success message
+            uploadFileCountRef.current = total;
+            setUploadFileCount(total);
           },
           {
             importMap,
             stylesheets,
-            dependencies: dependenciesArray
+            dependencies: dependenciesArray,
+            onFilesCollected: (fileCount, totalSize) => {
+              setUploadFileCount(fileCount);
+              uploadFileCountRef.current = fileCount;
+              totalBytesRef.current = totalSize;
+              setTotalBytes(totalSize);
+
+              // Update spinner to show file count
+              removeEntry('uploading');
+              addEntry({
+                type: 'spinner',
+                content: `Uploading ${fileCount} files...`,
+                color: 'cyan',
+                spinnerId: 'uploading'
+              });
+            }
           }
         );
+
+        // Upload complete - show success
+        removeEntry('uploading');
+        const uploadSizeMB = (totalBytesRef.current / (1024 * 1024)).toFixed(1);
+        addEntry({
+          type: 'success',
+          content: `✓ Uploaded ${uploadFileCountRef.current} files (${uploadSizeMB} MB)`,
+          color: 'green'
+        });
 
         // Extract theme pack info from upload result
         setThemePackId(uploadResult.themePackId || '');
         setComponentCount(uploadResult.componentCount || 0);
 
-        // Remove spinner from history and add completion message
-        removeEntry('server-processing');
-
+        // Add completion message
         addEntry({
           type: 'success',
           content: `✓ Published ${uploadResult.componentCount} component${uploadResult.componentCount !== 1 ? 's' : ''} to Oaysus`,

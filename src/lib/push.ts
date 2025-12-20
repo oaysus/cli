@@ -9,7 +9,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import { requireAuth } from './shared/auth.js';
 import { validatePackage } from './validator.js';
-import { uploadBuildFilesToR2 } from './shared/uploader.js';
+import { uploadBuildFilesToR2Streaming } from './shared/uploader.js';
 import { buildR2Path } from './shared/path-builder.js';
 import { R2_PUBLIC_URL } from './shared/config.js';
 import { detectFramework, getBuilder, getBundler, getImportMapGenerator } from './core/framework-registry.js';
@@ -118,14 +118,14 @@ export async function push(options: PushOptions = {}): Promise<PushResult> {
       logError(`Build failed: ${buildResult.error}`, silent);
       return { success: false, error: buildResult.error };
     }
-    logSuccess(`Built ${buildResult.components.length} component(s) (${(buildResult.totalSize / 1024).toFixed(1)} KB)`, silent);
+    logSuccess(`Built ${buildResult.components.length} component(s)`, silent);
 
     // Step 5: Build server components for SSR
     log('\nBuilding server components for SSR...', silent);
     const serverBuildResult = await builder.buildServerComponents(validationResult, absolutePath);
 
     if (serverBuildResult.success) {
-      logSuccess(`Built ${serverBuildResult.components.length} server component(s) (${(serverBuildResult.totalSize / 1024).toFixed(1)} KB)`, silent);
+      logSuccess(`Built ${serverBuildResult.components.length} server component(s)`, silent);
     } else {
       log(`⚠ Server components skipped: ${serverBuildResult.error}`, silent);
     }
@@ -162,8 +162,7 @@ export async function push(options: PushOptions = {}): Promise<PushResult> {
     });
 
     if (serverDeps.length > 0) {
-      const serverDepSize = serverDeps.reduce((sum, d) => sum + d.size, 0);
-      logSuccess(`Bundled server dependencies (${(serverDepSize / 1024).toFixed(1)} KB)`, silent);
+      logSuccess(`Bundled server dependencies`, silent);
     }
 
     // Step 8: Generate theme manifest
@@ -226,14 +225,14 @@ export async function push(options: PushOptions = {}): Promise<PushResult> {
       version: version as string
     }));
 
-    let lastPercent = 0;
-    const uploadResult = await uploadBuildFilesToR2(
+    let lastFile = '';
+    const uploadResult = await uploadBuildFilesToR2Streaming(
       buildResult.outputDir,
       validationResult.packageJson,
-      (bytesUploaded, totalBytes, pct) => {
-        if (!silent && pct >= lastPercent + 10) {
-          lastPercent = Math.floor(pct / 10) * 10;
-          process.stdout.write(`\r  Uploading: ${pct}%`);
+      (file, current, total) => {
+        if (!silent && file !== lastFile) {
+          lastFile = file;
+          process.stdout.write(`\r  Uploading: ${file} (${current}/${total})`.padEnd(80));
         }
       },
       {
@@ -244,9 +243,9 @@ export async function push(options: PushOptions = {}): Promise<PushResult> {
     );
 
     if (!silent) {
-      process.stdout.write('\r');
+      process.stdout.write('\r' + ' '.repeat(80) + '\r');
     }
-    logSuccess(`Uploaded to R2`, silent);
+    logSuccess(`Uploaded ${Object.keys(uploadResult.files || {}).length} files to R2`, silent);
 
     // Success!
     log('\n' + '─'.repeat(40), silent);

@@ -57,6 +57,16 @@ export interface FileToUpload {
 export type ProgressCallback = (bytesUploaded: number, totalBytes: number, percentage: number) => void;
 
 /**
+ * File metadata callback - called when files are collected before upload
+ */
+export type FileMetadataCallback = (fileCount: number, totalSize: number, files: FileToUpload[]) => void;
+
+/**
+ * File progress callback - called for each file uploaded (streaming mode)
+ */
+export type FileProgressCallback = (file: string, current: number, total: number) => void;
+
+/**
  * Upload error with specific error codes
  */
 export class UploadError extends Error {
@@ -77,6 +87,7 @@ export interface UploadOptions {
   importMap?: Record<string, any>;
   stylesheets?: Record<string, string>;
   dependencies?: Array<{ name: string; version: string }>;
+  onFilesCollected?: FileMetadataCallback;
 }
 
 /**
@@ -361,6 +372,11 @@ export async function uploadBuildFilesToR2(
   }
   const hashString = hash.digest('hex');
 
+  // 4.5 Notify about files to be uploaded
+  if (options?.onFilesCollected) {
+    options.onFilesCollected(files.length, totalSize, files);
+  }
+
   // 5. Build upload metadata
   const uploadMetadata = buildUploadMetadata(packageJson, credentials, {
     importMap: options?.importMap,
@@ -496,4 +512,243 @@ export async function uploadBuildFilesToR2(
       'UNKNOWN_ERROR'
     );
   }
+}
+
+/**
+ * Upload build files with streaming progress updates.
+ * Uses newline-delimited JSON for real-time file-by-file progress.
+ */
+export async function uploadBuildFilesToR2Streaming(
+  buildDir: string,
+  packageJson: PackageJson,
+  onFileProgress?: FileProgressCallback,
+  options?: UploadOptions
+): Promise<UploadResult> {
+  // 1. Load credentials
+  const credentials = await loadCredentials();
+
+  if (!credentials || !credentials.jwt) {
+    throw new UploadError(
+      'Not authenticated. Please run "oaysus login" first',
+      'NOT_AUTHENTICATED'
+    );
+  }
+
+  // 2. Check if build directory exists
+  if (!fs.existsSync(buildDir)) {
+    throw new UploadError(
+      `Build directory not found: ${buildDir}`,
+      'DIRECTORY_NOT_FOUND'
+    );
+  }
+
+  // 3. Collect all files from build directory
+  const files = collectFilesFromDir(buildDir);
+
+  if (files.length === 0) {
+    throw new UploadError(
+      'No files found in build directory',
+      'NO_FILES'
+    );
+  }
+
+  // 4. Calculate total size and hash
+  const totalSize = files.reduce((sum, f) => sum + f.size, 0);
+  const hash = crypto.createHash('sha256');
+  for (const file of files) {
+    const content = fs.readFileSync(file.absolutePath);
+    hash.update(content);
+  }
+  const hashString = hash.digest('hex');
+
+  // 4.5 Notify about files to be uploaded
+  if (options?.onFilesCollected) {
+    options.onFilesCollected(files.length, totalSize, files);
+  }
+
+  // 5. Build upload metadata
+  const uploadMetadata = buildUploadMetadata(packageJson, credentials, {
+    importMap: options?.importMap,
+    stylesheets: options?.stylesheets,
+    dependencies: options?.dependencies
+  });
+
+  // 6. Detect framework
+  const allDeps = { ...packageJson.dependencies, ...packageJson.devDependencies };
+  let framework = 'react';
+  if (allDeps['vue']) framework = 'vue';
+  else if (allDeps['svelte']) framework = 'svelte';
+  else if (allDeps['solid-js']) framework = 'solid';
+
+  // 7. Build file contents object
+  const fileContents: Record<string, { content: string; contentType: string }> = {};
+  for (const file of files) {
+    const content = fs.readFileSync(file.absolutePath);
+    fileContents[file.relativePath] = {
+      content: content.toString('base64'),
+      contentType: file.contentType
+    };
+  }
+
+  // 8. Prepare request body
+  const themeDescription = packageJson.oaysus?.theme?.description || packageJson.description || '';
+
+  const requestBody = {
+    files: fileContents,
+    packageJson,
+    r2Path: uploadMetadata.r2Path,
+    metadata: {
+      environment: uploadMetadata.environment,
+      developer: uploadMetadata.developer,
+      themeName: uploadMetadata.themeName,
+      componentName: uploadMetadata.themeName,
+      themeDisplayName: uploadMetadata.displayName,
+      displayName: uploadMetadata.displayName,
+      version: uploadMetadata.version,
+      framework,
+      category: packageJson.oaysus?.theme?.category || 'custom',
+      themeDescription: themeDescription,
+      description: themeDescription,
+      importMap: uploadMetadata.importMap,
+      stylesheets: uploadMetadata.stylesheets,
+      dependencies: uploadMetadata.dependencies,
+      tags: packageJson.oaysus?.theme?.tags || []
+    },
+    hash: hashString,
+    totalSize
+  };
+
+  // 9. Upload URL (streaming endpoint)
+  const uploadUrl = `${SSO_BASE_URL}/sso/cli/component/upload-files-streaming`;
+  debug('Streaming Upload URL:', uploadUrl);
+
+  // Debug: Write to file since Ink captures console
+  const debugLog = (msg: string) => {
+    fs.appendFileSync('/tmp/oaysus-stream-debug.log', `${new Date().toISOString()} ${msg}\n`);
+  };
+  debugLog(`Starting streaming upload to ${uploadUrl}`);
+  debugLog(`File count: ${files.length}, Total size: ${totalSize}`);
+
+  return new Promise((resolve, reject) => {
+    axios({
+      method: 'POST',
+      url: uploadUrl,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${credentials.jwt}`
+      },
+      data: requestBody,
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity,
+      responseType: 'stream'
+    })
+      .then((response) => {
+        debugLog('Response received, status: ' + response.status);
+        const stream = response.data;
+        let buffer = '';
+        let resolved = false;
+
+        stream.on('data', (chunk: Buffer) => {
+          const chunkStr = chunk.toString('utf8');
+          debugLog(`Received chunk (${chunkStr.length} chars): ${chunkStr.substring(0, 100)}`);
+
+          buffer += chunkStr;
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (!line.trim()) continue;
+
+            try {
+              const event = JSON.parse(line);
+              debugLog(`Parsed event: ${event.type}`);
+
+              switch (event.type) {
+                case 'start':
+                  debugLog(`Start event: ${event.fileCount} files`);
+                  break;
+
+                case 'file':
+                  debugLog(`File event: ${event.file} (${event.current}/${event.total})`);
+                  if (onFileProgress) {
+                    onFileProgress(event.file, event.current, event.total);
+                  }
+                  break;
+
+                case 'complete':
+                  debugLog('Complete event received');
+                  resolved = true;
+                  resolve(event as UploadResult);
+                  break;
+
+                case 'error':
+                  debugLog(`Error event: ${event.error}`);
+                  resolved = true;
+                  reject(new UploadError(event.error, event.code, 500));
+                  break;
+              }
+            } catch (e) {
+              debugLog(`Failed to parse line: ${line}`);
+            }
+          }
+        });
+
+        stream.on('error', (error: any) => {
+          debugLog(`Stream error: ${error.message}`);
+          if (!resolved) {
+            reject(new UploadError(error.message || 'Stream error', 'STREAM_ERROR'));
+          }
+        });
+
+        stream.on('end', () => {
+          debugLog(`Stream ended, resolved: ${resolved}, buffer: ${buffer.substring(0, 50)}`);
+          if (!resolved) {
+            // Process any remaining buffer
+            if (buffer.trim()) {
+              try {
+                const event = JSON.parse(buffer);
+                debugLog(`End buffer parsed: ${event.type}`);
+                if (event.type === 'complete') {
+                  resolve(event as UploadResult);
+                  return;
+                } else if (event.type === 'error') {
+                  reject(new UploadError(event.error, event.code, 500));
+                  return;
+                }
+              } catch (e) {
+                debugLog(`End buffer parse error`);
+              }
+            }
+            reject(new UploadError('Stream ended without completion', 'STREAM_ENDED'));
+          }
+        });
+      })
+      .catch((error: any) => {
+        debugLog(`Axios error: ${error.message}`);
+        if (axios.isAxiosError(error)) {
+          const status = error.response?.status;
+
+          if (status === 404) {
+            // Fallback to non-streaming endpoint
+            debug('Streaming endpoint not available, falling back to standard upload');
+            uploadBuildFilesToR2(buildDir, packageJson, undefined, options)
+              .then(resolve)
+              .catch(reject);
+            return;
+          }
+
+          if (status === 401) {
+            reject(new UploadError('Authentication failed', 'UNAUTHORIZED', 401));
+            return;
+          }
+
+          if (status === 403) {
+            reject(new UploadError('Access forbidden', 'FORBIDDEN', 403));
+            return;
+          }
+        }
+
+        reject(new UploadError(error.message || 'Upload failed', 'UNKNOWN_ERROR'));
+      });
+  });
 }
