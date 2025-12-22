@@ -38,7 +38,7 @@ export const COMMANDS: Command[] = [
     description: 'Authenticate with your Oaysus account',
   },
   {
-    name: 'status',
+    name: 'whoami',
     description: 'Display current user information',
   },
   {

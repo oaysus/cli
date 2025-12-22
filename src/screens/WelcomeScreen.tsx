@@ -18,7 +18,7 @@ type Screen =
   | { type: 'init'; projectName?: string }
   | { type: 'create'; componentName?: string; projectPath?: string }
   | { type: 'login' }
-  | { type: 'status' }
+  | { type: 'whoami' }
   | { type: 'logout' }
   | { type: 'validate'; projectPath?: string; dryRun?: boolean }
   | { type: 'push'; projectPath?: string };
@@ -139,7 +139,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNavigate, onExit
     const commandName = trimmed.slice(1).split(' ')[0];
 
     // Check if it's a valid command
-    const validCommands = ['init', 'create', 'login', 'status', 'logout', 'validate', 'push', 'exit'];
+    const validCommands = ['init', 'create', 'login', 'whoami', 'logout', 'validate', 'push', 'exit'];
     if (!validCommands.includes(commandName)) {
       if (addToHistory) {
         addToHistory({
@@ -182,8 +182,8 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNavigate, onExit
         case 'login':
           onNavigate({ type: 'login' });
           break;
-        case 'status':
-          onNavigate({ type: 'status' });
+        case 'whoami':
+          onNavigate({ type: 'whoami' });
           break;
         case 'logout':
           onNavigate({ type: 'logout' });
@@ -217,7 +217,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNavigate, onExit
     commands = commands.filter(cmd => {
       if (cmd.name === 'login') return !isLoggedIn;
       if (cmd.name === 'logout') return isLoggedIn;
-      if (cmd.name === 'status') return isLoggedIn;
+      if (cmd.name === 'whoami') return isLoggedIn;
       return true;
     });
 
@@ -255,7 +255,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNavigate, onExit
       commands = commands.filter(cmd => {
         if (cmd.name === 'login') return !isLoggedIn;
         if (cmd.name === 'logout') return isLoggedIn;
-        if (cmd.name === 'status') return isLoggedIn;
+        if (cmd.name === 'whoami') return isLoggedIn;
         return true;
       });
 

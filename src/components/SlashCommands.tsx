@@ -33,7 +33,7 @@ export const SlashCommands: React.FC<SlashCommandsProps> = ({
     commands = commands.filter(cmd => {
       if (cmd.name === 'login') return !isLoggedIn;
       if (cmd.name === 'logout') return isLoggedIn;
-      if (cmd.name === 'status') return isLoggedIn;
+      if (cmd.name === 'whoami') return isLoggedIn;
       return true;
     });
 

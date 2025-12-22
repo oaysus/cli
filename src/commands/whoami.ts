@@ -24,11 +24,18 @@ export async function whoamiCommand() {
 
     // Display user info
     console.log('');
-    console.log(chalk.bold.white('Current User:'));
+    console.log(chalk.bold.white('Who am I?'));
     console.log('');
     console.log(chalk.gray('Email:      '), chalk.white(credentials.email));
     console.log(chalk.gray('User ID:    '), chalk.white(credentials.userId));
-    console.log(chalk.gray('Website ID: '), chalk.white(credentials.websiteId));
+    // Display website: customDomain (preferred), subdomain, or ID as fallback
+    if (credentials.customDomain) {
+      console.log(chalk.gray('Website:    '), chalk.white(credentials.customDomain));
+    } else if (credentials.subdomain) {
+      console.log(chalk.gray('Website:    '), chalk.white(`${credentials.subdomain}.myoaysus.com`));
+    } else {
+      console.log(chalk.gray('Website ID: '), chalk.white(credentials.websiteId));
+    }
     console.log(chalk.gray('Platforms:  '), chalk.white(credentials.platforms.join(', ')));
     console.log('');
 

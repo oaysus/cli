@@ -13,7 +13,7 @@ type Screen =
   | { type: 'init'; projectName?: string }
   | { type: 'create'; componentName?: string; projectPath?: string }
   | { type: 'login' }
-  | { type: 'status' }
+  | { type: 'whoami' }
   | { type: 'logout' }
   | { type: 'validate'; projectPath?: string; dryRun?: boolean }
   | { type: 'push'; projectPath?: string };
@@ -111,7 +111,7 @@ export const App: React.FC<AppProps> = ({ initialScreen, onExit }) => {
         />
       );
 
-    case 'status':
+    case 'whoami':
       return (
         <WhoamiScreen
           onExit={returnToWelcome}

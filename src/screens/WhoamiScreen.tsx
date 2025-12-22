@@ -98,8 +98,10 @@ export const WhoamiScreen: React.FC<WhoamiScreenProps> = ({ onExit, sessionHisto
             { type: 'info', content: `Email: ${credsData.email}` }
           ];
 
-          // Add website subdomain (preferred), name, or ID as fallback
-          if (credsData.subdomain) {
+          // Add website: customDomain (preferred), subdomain, name, or ID as fallback
+          if (credsData.customDomain) {
+            statusEntries.push({ type: 'info', content: `Website: ${credsData.customDomain}` });
+          } else if (credsData.subdomain) {
             statusEntries.push({ type: 'info', content: `Website: ${credsData.subdomain}.myoaysus.com` });
           } else if (credsData.websiteName) {
             statusEntries.push({ type: 'info', content: `Website: ${credsData.websiteName}` });
@@ -181,7 +183,7 @@ export const WhoamiScreen: React.FC<WhoamiScreenProps> = ({ onExit, sessionHisto
         <Text dimColor>{'─'.repeat(process.stdout.columns || 80)}</Text>
         <Box>
           <Text dimColor>❯ </Text>
-          <Text dimColor>/status</Text>
+          <Text dimColor>/whoami</Text>
         </Box>
         <Text dimColor>{'─'.repeat(process.stdout.columns || 80)}</Text>
       </Box>
@@ -209,18 +211,23 @@ export const WhoamiScreen: React.FC<WhoamiScreenProps> = ({ onExit, sessionHisto
             <Box>
               <Text dimColor>Email: {credentials.email}</Text>
             </Box>
-            {/* Show subdomain (preferred), then name, then ID */}
-            {credentials.subdomain && (
+            {/* Show customDomain (preferred), subdomain, then name, then ID */}
+            {credentials.customDomain && (
+              <Box>
+                <Text dimColor>Website: {credentials.customDomain}</Text>
+              </Box>
+            )}
+            {!credentials.customDomain && credentials.subdomain && (
               <Box>
                 <Text dimColor>Website: {credentials.subdomain}.myoaysus.com</Text>
               </Box>
             )}
-            {!credentials.subdomain && credentials.websiteName && (
+            {!credentials.customDomain && !credentials.subdomain && credentials.websiteName && (
               <Box>
                 <Text dimColor>Website: {credentials.websiteName}</Text>
               </Box>
             )}
-            {!credentials.subdomain && !credentials.websiteName && (
+            {!credentials.customDomain && !credentials.subdomain && !credentials.websiteName && (
               <Box>
                 <Text dimColor>Website ID: {credentials.websiteId}</Text>
               </Box>

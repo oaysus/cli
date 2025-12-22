@@ -5,6 +5,7 @@ export interface Credentials {
   websiteId: string;
   websiteName?: string;
   subdomain?: string;
+  customDomain?: string;
   platforms: string[];
   expiresAt: string;
 }
@@ -32,6 +33,7 @@ export interface DeviceStatusResponse {
   websiteId?: string;
   websiteName?: string;
   subdomain?: string;
+  customDomain?: string;
   platforms?: string[];
   expiresIn?: number;
   message?: string;

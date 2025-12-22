@@ -235,6 +235,7 @@ export async function pollForAuth(
           websiteId: data.websiteId!,
           websiteName: data.websiteName,
           subdomain: data.subdomain,
+          customDomain: data.customDomain,
           platforms: data.platforms || ['oaysus', 'hosting'],
           expiresAt
         };
