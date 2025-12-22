@@ -8,22 +8,29 @@
   "scripts": {
     "preview": "node preview/generate.js && node preview/server.js",
     "preview:build": "node preview/generate.js",
-    "preview:start": "node preview/server.js"
+    "preview:start": "node preview/server.js",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build -o storybook-static"
   },
   "peerDependencies": {
     "svelte": "^5.43.14"
   },
   "devDependencies": {
-    "svelte": "^5.43.14",
+    "@storybook/addon-a11y": "^10.1.2",
+    "@storybook/svelte": "^10.1.2",
+    "@storybook/svelte-vite": "^10.1.2",
     "@sveltejs/vite-plugin-svelte": "^5.0.0",
+    "@tailwindcss/cli": "^4.1.17",
+    "@tailwindcss/postcss": "^4.1.17",
+    "autoprefixer": "^10.4.22",
+    "express": "^5.1.0",
+    "postcss": "^8.5.6",
+    "storybook": "^10.1.2",
+    "svelte": "^5.43.14",
     "svelte-check": "^3.6.0",
-    "typescript": "^5.3.3",
-    "vite": "^6.0.0",
-    "tailwindcss": "^4.0.0",
-    "@tailwindcss/postcss": "^4.0.0",
-    "autoprefixer": "^10.4.16",
-    "postcss": "^8.4.32",
-    "express": "^4.18.2"
+    "tailwindcss": "^4.1.17",
+    "typescript": "^5.9.3",
+    "vite": "^6.0.0"
   },
   "oaysus": {
     "theme": {
@@ -32,7 +39,7 @@
       "description": "{{DESCRIPTION}}",
       "category": "marketing",
       "isPremium": false,
-      "tags": ["marketing", "components", "theme", "svelte"]
+      "tags": ["marketing", "components", "theme", "svelte", "performance"]
     }
   }
 }

@@ -1,0 +1,31 @@
+/**
+ * Shared TypeScript types for Svelte components
+ */
+
+export interface BaseComponentProps {
+  class?: string;
+}
+
+export interface ButtonProps extends BaseComponentProps {
+  text: string;
+  link: string;
+  variant?: 'primary' | 'secondary';
+}
+
+export interface HeadingProps extends BaseComponentProps {
+  heading: string;
+  subheading?: string;
+}
+
+export interface ImageProps {
+  src: string;
+  alt: string;
+  width?: number;
+  height?: number;
+}
+
+export interface LinkProps {
+  text: string;
+  href: string;
+  target?: '_blank' | '_self';
+}

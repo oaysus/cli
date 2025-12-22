@@ -42,7 +42,7 @@
       "description": "{{DESCRIPTION}}",
       "category": "marketing",
       "isPremium": false,
-      "tags": ["marketing", "components", "theme"]
+      "tags": ["marketing", "components", "theme", "react", "tailwind"]
     }
   },
   "dependencies": {

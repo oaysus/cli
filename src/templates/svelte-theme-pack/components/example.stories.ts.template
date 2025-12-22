@@ -1,0 +1,34 @@
+import type { Meta, StoryObj } from '@storybook/svelte';
+import {{COMPONENT_NAME}} from './{{COMPONENT_NAME}}.svelte';
+import { schemaToArgTypes, schemaToDefaultArgs } from '../.storybook/utils/schemaToArgTypes';
+import schema from './schema.json';
+
+const meta: Meta<typeof {{COMPONENT_NAME}}> = {
+  title: 'Components/{{COMPONENT_NAME}}',
+  component: {{COMPONENT_NAME}},
+  argTypes: schemaToArgTypes(schema),
+  args: schemaToDefaultArgs(schema),
+  parameters: {
+    layout: 'fullscreen'
+  }
+};
+
+export default meta;
+type Story = StoryObj<typeof {{COMPONENT_NAME}}>;
+
+/**
+ * Default story using schema defaults
+ */
+export const Default: Story = {};
+
+/**
+ * Custom example with modified props
+ */
+export const CustomExample: Story = {
+  args: {
+    heading: 'Custom Heading',
+    subheading: 'This is a custom subheading',
+    buttonText: 'Click Me',
+    buttonLink: '/custom-link'
+  }
+};
