@@ -13,9 +13,11 @@ import { InitScreen } from './screens/InitScreen.js';
 import { CreateScreen } from './screens/CreateScreen.js';
 import { PushScreen } from './screens/PushScreen.js';
 import { BuildScreen } from './screens/BuildScreen.js';
+import { SwitchScreen } from './screens/SwitchScreen.js';
 import { App } from './components/App.js';
 import { saveCommandToHistory } from './lib/shared/command-history.js';
 import { push } from './lib/push.js';
+import { switchCommand } from './commands/switch.js';
 import { checkAuthForCommand } from './lib/shared/auth-middleware.js';
 
 // Get package version function
@@ -80,6 +82,7 @@ Commands
   login           Authenticate with your Oaysus account
   logout          Clear authentication tokens and log out
   whoami          Display current authenticated user information
+  switch          Switch between your websites
 
 Options
   --help, -h      Show this help message
@@ -180,6 +183,19 @@ Project Structure
           projectPath: args[1] || '.',
           onExit: handleExit
         }));
+      }
+      break;
+
+    case 'switch':
+      // Use non-interactive mode if no TTY
+      if (!process.stdin.isTTY) {
+        switchCommand().then(() => {
+          process.exit(0);
+        }).catch(() => {
+          process.exit(1);
+        });
+      } else {
+        render(React.createElement(SwitchScreen, { onExit: handleExit }));
       }
       break;
 

@@ -7,6 +7,7 @@ import { WhoamiScreen } from '../screens/WhoamiScreen.js';
 import { LogoutScreen } from '../screens/LogoutScreen.js';
 import { ValidateScreen } from '../screens/ValidateScreen.js';
 import { PushScreen } from '../screens/PushScreen.js';
+import { SwitchScreen } from '../screens/SwitchScreen.js';
 
 type Screen =
   | { type: 'welcome' }
@@ -16,7 +17,8 @@ type Screen =
   | { type: 'whoami' }
   | { type: 'logout' }
   | { type: 'validate'; projectPath?: string; dryRun?: boolean }
-  | { type: 'push'; projectPath?: string };
+  | { type: 'push'; projectPath?: string }
+  | { type: 'switch' };
 
 export interface HistoryEntry {
   type: 'prompt' | 'response' | 'info' | 'success' | 'error' | 'progress' | 'spinner';
@@ -149,6 +151,15 @@ export const App: React.FC<AppProps> = ({ initialScreen, onExit }) => {
           sessionHistory={sessionHistory}
           addToHistory={addToHistory}
           removeFromHistory={removeFromHistory}
+        />
+      );
+
+    case 'switch':
+      return (
+        <SwitchScreen
+          onExit={returnToWelcome}
+          sessionHistory={sessionHistory}
+          addToHistory={addToHistory}
         />
       );
 

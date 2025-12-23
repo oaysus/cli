@@ -42,6 +42,10 @@ export const COMMANDS: Command[] = [
     description: 'Display current user information',
   },
   {
+    name: 'switch',
+    description: 'Switch between your websites',
+  },
+  {
     name: 'logout',
     description: 'Clear authentication tokens',
   },

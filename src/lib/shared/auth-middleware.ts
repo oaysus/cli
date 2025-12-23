@@ -14,7 +14,7 @@ export interface AuthCheckResult {
 /**
  * Commands that require authentication
  */
-const AUTH_REQUIRED_COMMANDS = ['push', 'publish'];
+const AUTH_REQUIRED_COMMANDS = ['push', 'publish', 'switch'];
 
 /**
  * Check if a command requires authentication and validate credentials

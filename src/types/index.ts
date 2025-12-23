@@ -21,6 +21,7 @@ export interface Website {
   id: string;
   name: string;
   subdomain: string;
+  customDomain?: string;
 }
 
 export interface DeviceStatusResponse {

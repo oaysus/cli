@@ -354,3 +354,63 @@ export async function requireAuth(): Promise<Credentials> {
 
   return credentials;
 }
+
+/**
+ * Fetch user's websites from API (for switch command)
+ */
+export async function getMyWebsites(): Promise<import('../../types/index.js').Website[]> {
+  const credentials = await requireAuth();
+
+  const url = `${SSO_BASE_URL}/sso/cli/device/websites`;
+
+  log('[DEBUG] Fetching user websites');
+  log('[DEBUG] API URL:', url);
+
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        Authorization: `Bearer ${credentials.jwt}`
+      }
+    });
+
+    log('[DEBUG] Websites response:', response.data);
+
+    if (response.data.success && response.data.websites) {
+      return response.data.websites;
+    }
+
+    throw new Error('Failed to fetch websites');
+  } catch (error) {
+    logError('[ERROR] Fetch websites failed');
+    if (axios.isAxiosError(error)) {
+      logError('[ERROR] Status:', error.response?.status);
+      logError('[ERROR] Response:', error.response?.data);
+    }
+    throw formatApiError(error, 'fetching websites');
+  }
+}
+
+/**
+ * Update website in existing credentials (for switch command)
+ */
+export async function updateCredentialsWebsite(
+  websiteId: string,
+  websiteName: string,
+  subdomain: string,
+  customDomain?: string
+): Promise<void> {
+  const credentials = await loadCredentials();
+
+  if (!credentials) {
+    throw new Error('Not authenticated. Run: oaysus login');
+  }
+
+  credentials.websiteId = websiteId;
+  credentials.websiteName = websiteName;
+  credentials.subdomain = subdomain;
+  credentials.customDomain = customDomain;
+
+  await saveCredentials(credentials);
+
+  log('[DEBUG] Credentials updated with new website:', websiteId);
+}
