@@ -1,6 +1,6 @@
 {
   "name": "@oaysus/cli",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Oaysus CLI - Professional developer tool for component uploads",
   "type": "module",
   "bin": {
@@ -10,7 +10,8 @@
   "types": "./dist/index.d.ts",
   "files": [
     "dist",
-    "bin"
+    "bin",
+    "src/templates"
   ],
   "scripts": {
     "build": "tsc",
