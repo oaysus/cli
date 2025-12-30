@@ -1,13 +1,18 @@
 import ora from 'ora';
 import chalk from 'chalk';
-import open from 'open';
 import inquirer from 'inquirer';
 import { requestMagicLink, initializeDevice, pollForAuth, saveCredentials } from '../lib/shared/auth';
 import type { Credentials } from '../types/index.js';
 
+// Debug toggle
+const DEBUG = true;
+
 export async function loginCommand() {
   try {
+    if (DEBUG) console.log('[DEBUG] loginCommand started');
+
     // Step 1: Prompt for email
+    if (DEBUG) console.log('[DEBUG] Prompting for email...');
     const { email } = await inquirer.prompt([
       {
         type: 'input',
@@ -22,25 +27,36 @@ export async function loginCommand() {
         }
       }
     ]);
+    if (DEBUG) console.log('[DEBUG] Email entered:', email);
 
-    // Step 2: Request magic link
-    const spinner = ora('Sending magic link...').start();
-
-    await requestMagicLink(email, '/device');
-
-    spinner.succeed('Magic link sent to your email');
-
-    // Step 3: Initialize device authorization (for later polling)
+    // Step 2: Initialize device authorization FIRST (to get device code for magic link)
+    if (DEBUG) console.log('[DEBUG] Initializing device...');
     const deviceSpinner = ora('Initializing device authorization...').start();
     const deviceResponse = await initializeDevice();
     deviceSpinner.succeed('Device code generated');
+    if (DEBUG) console.log('[DEBUG] Device response:', JSON.stringify(deviceResponse));
 
-    // Display instructions
+    // Step 3: Request magic link with device code embedded
+    if (DEBUG) console.log('[DEBUG] Sending magic link...');
+    const spinner = ora('Sending magic link...').start();
+    try {
+      await requestMagicLink(email, deviceResponse.deviceCode);
+      if (DEBUG) console.log('\n[DEBUG] requestMagicLink returned successfully');
+    } catch (magicLinkError) {
+      spinner.fail('Failed to send magic link');
+      if (DEBUG) console.log('[DEBUG] requestMagicLink threw error:', magicLinkError);
+      throw magicLinkError;
+    }
+    spinner.succeed('Magic link sent to your email');
+    if (DEBUG) console.log('[DEBUG] Magic link sent successfully');
+
+    // Force flush output
+    process.stdout.write('');
+
+    // Display instructions (no need to show user code - magic link has device code embedded)
     console.log('');
     console.log(chalk.bold.cyan('═══════════════════════════════════════'));
     console.log(chalk.bold.white('  📧 Check your email and click the link'));
-    console.log('');
-    console.log(chalk.gray('  Then enter code:'), chalk.bold.yellow(deviceResponse.userCode));
     console.log(chalk.bold.cyan('═══════════════════════════════════════'));
     console.log('');
 
@@ -74,6 +90,14 @@ export async function loginCommand() {
     console.log('');
 
   } catch (error) {
+    if (DEBUG) {
+      console.error('[DEBUG] Error caught in loginCommand:');
+      console.error('[DEBUG] Error type:', error?.constructor?.name);
+      console.error('[DEBUG] Error:', error);
+      if (error instanceof Error) {
+        console.error('[DEBUG] Stack:', error.stack);
+      }
+    }
     console.error('');
     console.error(chalk.red('✗ Authentication failed'));
     console.error('');

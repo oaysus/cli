@@ -39,7 +39,7 @@ interface LoginScreenProps {
  * LoginScreen Component
  * Handles authentication flow with init-style UI
  */
-export const LoginScreen: React.FC<LoginScreenProps> = ({ onExit, sessionHistory = [], addToHistory, removeFromHistory }) => {
+export const LoginScreen: React.FC<LoginScreenProps> = ({ onExit, sessionHistory: externalHistory, addToHistory: externalAddToHistory, removeFromHistory: externalRemoveFromHistory }) => {
   const [state, setState] = useState<LoginState>('email-input');
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -55,6 +55,28 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onExit, sessionHistory
     isLoaded: false
   });
   const [directory] = useState(process.cwd());
+
+  // Internal history management for standalone mode (when no external history is provided)
+  const [internalHistory, setInternalHistory] = useState<HistoryEntry[]>([]);
+  const isStandalone = !externalAddToHistory;
+
+  // Use internal or external history
+  const sessionHistory = isStandalone ? internalHistory : (externalHistory || []);
+
+  const addToHistory = isStandalone
+    ? (entry: HistoryEntry | HistoryEntry[]) => {
+        setInternalHistory(prev => {
+          const entries = Array.isArray(entry) ? entry : [entry];
+          return [...prev, ...entries];
+        });
+      }
+    : externalAddToHistory;
+
+  const removeFromHistory = isStandalone
+    ? (spinnerId: string) => {
+        setInternalHistory(prev => prev.filter(e => e.spinnerId !== spinnerId));
+      }
+    : externalRemoveFromHistory;
 
   // Destructure for easier access
   const { version, userEmail, isLoaded } = appData;
@@ -203,14 +225,21 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onExit, sessionHistory
           return;
         }
 
-        // Has websites - proceed to selection
-        setWebsites(result.websites);
-        setState('website-selection');
-
         // Remove waiting spinner
         if (removeFromHistory) {
           removeFromHistory('waiting-auth');
         }
+
+        // If only one website, auto-select it
+        if (result.websites.length === 1) {
+          const singleWebsite = result.websites[0];
+          handleWebsiteSelect({ value: singleWebsite.id, label: singleWebsite.name });
+          return;
+        }
+
+        // Has multiple websites - proceed to selection
+        setWebsites(result.websites);
+        setState('website-selection');
       } else {
         // Got credentials directly (shouldn't happen in new flow, but handle it)
         if (removeFromHistory) {
@@ -545,6 +574,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onExit, sessionHistory
                   value: w.id
                 }))}
                 onSelect={handleWebsiteSelect}
+                limit={websites.length}
               />
             </Box>
 

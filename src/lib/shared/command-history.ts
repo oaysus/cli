@@ -1,8 +1,8 @@
 import fs from 'fs/promises';
 import path from 'path';
-import os from 'os';
+import { CONFIG_DIR } from './config.js';
 
-const HISTORY_PATH = path.join(os.homedir(), '.oaysus', 'history.json');
+const HISTORY_PATH = path.join(CONFIG_DIR, 'history.json');
 const MAX_HISTORY_SIZE = 10;
 
 export interface CommandHistoryEntry {

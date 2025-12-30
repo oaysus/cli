@@ -88,6 +88,11 @@ function loadEnvLocal(): boolean {
 // Load .env.local if present (this sets process.env values)
 const _hasEnvLocal = loadEnvLocal();
 
+// Use separate directories for local dev vs production to avoid token conflicts
+// Production CLI uses ~/.oaysus/
+// Local dev CLI uses ~/.oaysus-local/
+const CONFIG_DIR_NAME = _hasEnvLocal ? '.oaysus-local' : '.oaysus';
+
 /**
  * Environment configuration
  * Priority: .env.local > environment variables > production defaults
@@ -111,11 +116,11 @@ export const config = {
   // Debug mode (console logging, off by default)
   DEBUG: process.env.DEBUG === 'true',
 
-  // Credentials storage path
-  CREDENTIALS_PATH: path.join(os.homedir(), '.oaysus', 'credentials.json'),
+  // Credentials storage path (separate for local dev vs production)
+  CREDENTIALS_PATH: path.join(os.homedir(), CONFIG_DIR_NAME, 'credentials.json'),
 
-  // Config directory
-  CONFIG_DIR: path.join(os.homedir(), '.oaysus'),
+  // Config directory (separate for local dev vs production)
+  CONFIG_DIR: path.join(os.homedir(), CONFIG_DIR_NAME),
 
   // Flag indicating if .env.local was loaded
   IS_LOCAL_DEV: _hasEnvLocal,

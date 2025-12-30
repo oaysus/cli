@@ -738,17 +738,51 @@ export async function uploadBuildFilesToR2Streaming(
           }
 
           if (status === 401) {
-            reject(new UploadError('Authentication failed', 'UNAUTHORIZED', 401));
+            reject(new UploadError(
+              'Authentication failed. Please run "oaysus login" again',
+              'UNAUTHORIZED',
+              401
+            ));
             return;
           }
 
           if (status === 403) {
-            reject(new UploadError('Access forbidden', 'FORBIDDEN', 403));
+            reject(new UploadError(
+              'Access forbidden. Your authentication may have expired. Try: oaysus logout && oaysus login',
+              'FORBIDDEN',
+              403
+            ));
             return;
           }
-        }
 
-        reject(new UploadError(error.message || 'Upload failed', 'UNKNOWN_ERROR'));
+          // Parse error response for better messages
+          const errorData = error.response?.data;
+          const errorMsg = errorData?.error || errorData?.message || error.message || 'Upload failed';
+
+          // Check if error message indicates auth issue
+          if (errorMsg.toLowerCase().includes('invalid token') || errorMsg.toLowerCase().includes('token expired')) {
+            reject(new UploadError(
+              'Authentication failed. Please run "oaysus login" again',
+              'UNAUTHORIZED',
+              401
+            ));
+            return;
+          }
+
+          reject(new UploadError(errorMsg, 'UNKNOWN_ERROR', status));
+        } else {
+          // Non-axios error - check message for auth hints
+          const errorMsg = error.message || 'Upload failed';
+          if (errorMsg.toLowerCase().includes('invalid token') || errorMsg.toLowerCase().includes('token expired')) {
+            reject(new UploadError(
+              'Authentication failed. Please run "oaysus login" again',
+              'UNAUTHORIZED',
+              401
+            ));
+            return;
+          }
+          reject(new UploadError(errorMsg, 'UNKNOWN_ERROR'));
+        }
       });
   });
 }
