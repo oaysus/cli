@@ -231,9 +231,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onExit, sessionHistory
         }
 
         // If only one website, auto-select it
+        // Pass deviceResponse.deviceCode directly since React state may not have updated yet
         if (result.websites.length === 1) {
           const singleWebsite = result.websites[0];
-          handleWebsiteSelect({ value: singleWebsite.id, label: singleWebsite.name });
+          handleWebsiteSelect({ value: singleWebsite.id, label: singleWebsite.name }, deviceResponse.deviceCode);
           return;
         }
 
@@ -279,11 +280,15 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onExit, sessionHistory
   };
 
   // Handle website selection
-  const handleWebsiteSelect = async (item: { value: string; label: string }) => {
+  // Note: deviceCodeOverride is used when auto-selecting before React state updates
+  const handleWebsiteSelect = async (item: { value: string; label: string }, deviceCodeOverride?: string) => {
     // Safety check - if no item selected, ignore
     if (!item || !item.value) {
       return;
     }
+
+    // Use override if provided (for auto-select before state updates), otherwise use state
+    const codeToUse = deviceCodeOverride || deviceCode;
 
     setState('selecting-website');
 
@@ -299,12 +304,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onExit, sessionHistory
 
     try {
       // Submit website selection
-      await selectWebsite(deviceCode, item.value);
+      await selectWebsite(codeToUse, item.value);
 
       setState('waiting-for-jwt');
 
       // Continue polling for JWT
-      const result = await pollForAuth(deviceCode, {
+      const result = await pollForAuth(codeToUse, {
         interval: 2000,
         timeout: 600000,
       });
