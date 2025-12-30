@@ -32,6 +32,10 @@ export const COMMANDS: Command[] = [
     name: 'push',
     description: 'Upload component package to Oaysus',
   },
+  {
+    name: 'delete',
+    description: 'Delete a theme pack from Oaysus',
+  },
   // Authentication
   {
     name: 'login',

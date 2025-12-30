@@ -22,7 +22,8 @@ type Screen =
   | { type: 'logout' }
   | { type: 'validate'; projectPath?: string; dryRun?: boolean }
   | { type: 'push'; projectPath?: string }
-  | { type: 'switch' };
+  | { type: 'switch' }
+  | { type: 'delete'; themeName?: string };
 
 interface WelcomeScreenProps {
   onNavigate?: (screen: Screen) => void;
@@ -140,7 +141,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNavigate, onExit
     const commandName = trimmed.slice(1).split(' ')[0];
 
     // Check if it's a valid command
-    const validCommands = ['init', 'create', 'login', 'whoami', 'logout', 'validate', 'push', 'switch', 'exit'];
+    const validCommands = ['init', 'create', 'login', 'whoami', 'logout', 'validate', 'push', 'switch', 'delete', 'exit'];
     if (!validCommands.includes(commandName)) {
       if (addToHistory) {
         addToHistory({
@@ -197,6 +198,9 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNavigate, onExit
           break;
         case 'switch':
           onNavigate({ type: 'switch' });
+          break;
+        case 'delete':
+          onNavigate({ type: 'delete' });
           break;
         default:
           break;

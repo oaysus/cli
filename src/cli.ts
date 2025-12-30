@@ -14,11 +14,11 @@ import { CreateScreen } from './screens/CreateScreen.js';
 import { PushScreen } from './screens/PushScreen.js';
 import { BuildScreen } from './screens/BuildScreen.js';
 import { SwitchScreen } from './screens/SwitchScreen.js';
+import { DeleteScreen } from './screens/DeleteScreen.js';
 import { App } from './components/App.js';
 import { saveCommandToHistory } from './lib/shared/command-history.js';
 import { push } from './lib/push.js';
 import { switchCommand } from './commands/switch.js';
-import { deleteCommand } from './commands/delete.js';
 import { checkAuthForCommand } from './lib/shared/auth-middleware.js';
 
 // Get package version function
@@ -207,19 +207,13 @@ Project Structure
       break;
 
     case 'delete':
-      // Parse options for delete command
-      const deleteOptions = {
-        force: args.includes('--force') || args.includes('-f'),
-        yes: args.includes('--yes') || args.includes('-y')
-      };
       // Get theme name (first non-flag argument after 'delete')
       const deleteThemeName = args.slice(1).find(arg => !arg.startsWith('-'));
 
-      deleteCommand(deleteThemeName, deleteOptions).then(() => {
-        process.exit(0);
-      }).catch(() => {
-        process.exit(1);
-      });
+      render(React.createElement(DeleteScreen, {
+        themeName: deleteThemeName,
+        onExit: handleExit
+      }));
       break;
 
     default:

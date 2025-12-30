@@ -8,6 +8,7 @@ import { LogoutScreen } from '../screens/LogoutScreen.js';
 import { ValidateScreen } from '../screens/ValidateScreen.js';
 import { PushScreen } from '../screens/PushScreen.js';
 import { SwitchScreen } from '../screens/SwitchScreen.js';
+import { DeleteScreen } from '../screens/DeleteScreen.js';
 
 type Screen =
   | { type: 'welcome' }
@@ -18,7 +19,8 @@ type Screen =
   | { type: 'logout' }
   | { type: 'validate'; projectPath?: string; dryRun?: boolean }
   | { type: 'push'; projectPath?: string }
-  | { type: 'switch' };
+  | { type: 'switch' }
+  | { type: 'delete'; themeName?: string };
 
 export interface HistoryEntry {
   type: 'prompt' | 'response' | 'info' | 'success' | 'error' | 'progress' | 'spinner';
@@ -160,6 +162,17 @@ export const App: React.FC<AppProps> = ({ initialScreen, onExit }) => {
           onExit={returnToWelcome}
           sessionHistory={sessionHistory}
           addToHistory={addToHistory}
+        />
+      );
+
+    case 'delete':
+      return (
+        <DeleteScreen
+          themeName={currentScreen.themeName}
+          onExit={returnToWelcome}
+          sessionHistory={sessionHistory}
+          addToHistory={addToHistory}
+          removeFromHistory={removeFromHistory}
         />
       );
 
