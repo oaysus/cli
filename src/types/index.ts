@@ -44,3 +44,29 @@ export interface ApiError {
   error: string;
   statusCode?: number;
 }
+
+export interface ThemePack {
+  id: string;
+  name: string;
+  displayName: string;
+  version: string;
+  componentCount: number;
+  installationCount: number;
+  r2_base_path?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ThemePackListResponse {
+  success: boolean;
+  themePacks: ThemePack[];
+  error?: string;
+}
+
+export interface ThemePackDeleteResponse {
+  success: boolean;
+  message?: string;
+  deletedId?: string;
+  error?: string;
+  activeInstallations?: number;
+}

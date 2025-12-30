@@ -18,6 +18,7 @@ import { App } from './components/App.js';
 import { saveCommandToHistory } from './lib/shared/command-history.js';
 import { push } from './lib/push.js';
 import { switchCommand } from './commands/switch.js';
+import { deleteCommand } from './commands/delete.js';
 import { checkAuthForCommand } from './lib/shared/auth-middleware.js';
 
 // Get package version function
@@ -79,6 +80,7 @@ Commands
   validate        Validate component package and create ZIP
   build           Build components locally (no upload to R2)
   push            Build and upload component package to Oaysus
+  delete [name]   Delete a theme pack from Oaysus
   login           Authenticate with your Oaysus account
   logout          Clear authentication tokens and log out
   whoami          Display current authenticated user information
@@ -88,6 +90,8 @@ Options
   --help, -h      Show this help message
   --version, -v   Show version number
   --dry-run       Validate without creating ZIP (validate command only)
+  --force, -f     Force delete (uninstalls from all websites first)
+  --yes, -y       Skip confirmation prompts (delete command only)
 
 Examples
   $ oaysus init my-project          # Create new project with components/ structure
@@ -95,6 +99,9 @@ Examples
   $ oaysus validate                 # Validate and create ZIP (no upload)
   $ oaysus build                    # Build components to .oaysus-build/ (no upload)
   $ oaysus push                     # Build and upload to Oaysus
+  $ oaysus delete                   # Interactive delete (shows list of theme packs)
+  $ oaysus delete my-theme          # Delete specific theme pack
+  $ oaysus delete my-theme --force  # Force delete (removes installations)
   $ oaysus login                    # Authenticate with Oaysus
   $ oaysus whoami                   # Show current user
   $ oaysus logout                   # Sign out
@@ -197,6 +204,22 @@ Project Structure
       } else {
         render(React.createElement(SwitchScreen, { onExit: handleExit }));
       }
+      break;
+
+    case 'delete':
+      // Parse options for delete command
+      const deleteOptions = {
+        force: args.includes('--force') || args.includes('-f'),
+        yes: args.includes('--yes') || args.includes('-y')
+      };
+      // Get theme name (first non-flag argument after 'delete')
+      const deleteThemeName = args.slice(1).find(arg => !arg.startsWith('-'));
+
+      deleteCommand(deleteThemeName, deleteOptions).then(() => {
+        process.exit(0);
+      }).catch(() => {
+        process.exit(1);
+      });
       break;
 
     default:
