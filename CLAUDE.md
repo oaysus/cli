@@ -124,6 +124,12 @@ src/
 
 Components are built as ESM modules that rely on browser import maps for dependency resolution. The generated `import-map.json` maps bare specifiers (e.g., `react`) to CDN URLs, enabling multiple components to share a single React instance without bundling React into each component.
 
+## Writing Guidelines
+
+When writing copy, documentation, or user-facing text:
+- **Never use dashes or emdashes** in sentences. Rewrite to avoid them entirely.
+- Use periods to separate thoughts, or restructure sentences.
+
 ## Authentication Flow
 
 Uses device authorization flow with magic links:

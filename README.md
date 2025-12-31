@@ -1,22 +1,55 @@
-# @oaysus/cli
+<p align="center">
+  <a href="https://oaysus.com">
+    <img src="https://oaysus.com/images/oaysus-icon.png" alt="Oaysus Logo" width="80" />
+  </a>
+</p>
 
-[![npm version](https://img.shields.io/npm/v/@oaysus/cli.svg)](https://www.npmjs.com/package/@oaysus/cli)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+<h1 align="center">Oaysus CLI</h1>
 
-**Build components in React, Vue, or Svelte. Push with one command. Let your team create pages visually.**
+<p align="center">
+  <strong>The visual page builder for developer-built components</strong>
+</p>
 
-Stop building every landing page from scratch. Oaysus lets developers create reusable components that marketing teams can assemble into pages without writing code or waiting for deployments.
+<p align="center">
+  Build components in React, Vue, or Svelte. Push with one command.<br />
+  Let your team create pages visually.
+</p>
 
-## What is Oaysus?
+<p align="center">
+  <a href="https://oaysus.com/docs/quickstart"><strong>Documentation</strong></a> ·
+  <a href="https://youtu.be/VlUNf-uZvTY"><strong>Watch Demo</strong></a> ·
+  <a href="https://oaysus.com"><strong>Website</strong></a>
+</p>
 
-[Oaysus](https://oaysus.com) is a visual page builder for developer-built components. You write components in your favorite framework, define what's editable via a simple schema, and push them to Oaysus. Your marketing team then uses a drag-and-drop editor to create pages instantly.
+<p align="center">
+  <a href="https://www.npmjs.com/package/@oaysus/cli">
+    <img src="https://img.shields.io/npm/v/@oaysus/cli.svg" alt="npm version" />
+  </a>
+  <a href="https://opensource.org/licenses/MIT">
+    <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT" />
+  </a>
+</p>
 
-**The workflow:**
+<p align="center">
+  <a href="https://youtu.be/VlUNf-uZvTY">
+    <img src="./assets/demo.gif" alt="Oaysus CLI Demo" width="800" />
+  </a>
+  <br />
+  <sub>From code to published page in seconds</sub>
+</p>
+
+---
+
+## One command. Your component is live.
+
+Watch how fast you can go from code to a published website with Oaysus.
+
+```bash
+oaysus init         # Pick your framework. Name your project.
+oaysus push         # Your component builds and deploys in seconds.
 ```
-Developer builds component → Pushes to Oaysus → Marketing creates pages visually
-```
 
-No more "can you update the hero text?" tickets. No more waiting for deploys to change copy. Your team ships faster, and you get back to building features.
+No build pipelines. No complex deployments. Your marketing team creates pages visually, and you get back to building features.
 
 ## Installation
 
@@ -53,19 +86,6 @@ That's it. Your components are now available in the visual page builder.
 Install in dashboard: Content → Theme Packs
 ```
 
-## Commands
-
-| Command | Description |
-|---------|-------------|
-| `oaysus init [name]` | Create a new theme pack project |
-| `oaysus create` | Add a component to your project |
-| `oaysus validate` | Validate package structure |
-| `oaysus build` | Build components locally (no upload) |
-| `oaysus push` | Build and upload to Oaysus |
-| `oaysus login` | Authenticate with Oaysus |
-| `oaysus logout` | Clear authentication |
-| `oaysus whoami` | Display current user |
-
 ## Framework Support
 
 Build with the tools you already know:
@@ -82,11 +102,15 @@ Each component has two files: the code and a schema that defines what's editable
 
 **Component (React example):**
 ```tsx
-export default function AnnouncementBar({ message, backgroundColor }) {
+export default function Hero({ headline, subtext, ctaLabel }) {
   return (
-    <div style={{ backgroundColor }} className="py-3 px-4 text-center text-white">
-      {message}
-    </div>
+    <section className="py-20 text-center">
+      <h1 className="text-5xl font-bold">{headline}</h1>
+      <p className="mt-4 text-xl text-gray-600">{subtext}</p>
+      <button className="mt-8 px-6 py-3 bg-blue-600 text-white rounded-lg">
+        {ctaLabel}
+      </button>
+    </section>
   );
 }
 ```
@@ -94,21 +118,38 @@ export default function AnnouncementBar({ message, backgroundColor }) {
 **Schema:**
 ```json
 {
-  "displayName": "Announcement Bar",
+  "displayName": "Hero Section",
   "props": {
-    "message": {
+    "headline": {
       "type": "string",
-      "default": "Free shipping on orders over $50"
+      "default": "Build faster, ship sooner"
     },
-    "backgroundColor": {
-      "type": "color",
-      "default": "#2563eb"
+    "subtext": {
+      "type": "string",
+      "default": "The platform for modern teams"
+    },
+    "ctaLabel": {
+      "type": "string",
+      "default": "Get Started"
     }
   }
 }
 ```
 
-Marketing edits `message` and `backgroundColor` in the visual editor. You never touch the code again.
+Marketing edits these props in the visual editor. You never touch the code again.
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `oaysus init [name]` | Create a new theme pack project |
+| `oaysus create` | Add a component to your project |
+| `oaysus validate` | Validate package structure |
+| `oaysus build` | Build components locally (no upload) |
+| `oaysus push` | Build and upload to Oaysus |
+| `oaysus login` | Authenticate with Oaysus |
+| `oaysus logout` | Clear authentication |
+| `oaysus whoami` | Display current user |
 
 ## Project Structure
 
@@ -116,23 +157,16 @@ Marketing edits `message` and `backgroundColor` in the visual editor. You never 
 my-components/
 ├── package.json
 └── components/
-    ├── AnnouncementBar/
-    │   ├── index.tsx
-    │   └── schema.json
     ├── Hero/
     │   ├── index.tsx
     │   └── schema.json
-    └── FeatureGrid/
+    ├── FeatureGrid/
+    │   ├── index.tsx
+    │   └── schema.json
+    └── Testimonials/
         ├── index.tsx
         └── schema.json
 ```
-
-## Documentation
-
-- **[Quick Start Guide](https://oaysus.com/docs/quickstart)** — Build your first component in 5 minutes
-- **[CLI Reference](https://oaysus.com/docs/cli)** — Complete command documentation
-- **[Component Guide](https://oaysus.com/docs/components)** — Props, schemas, and best practices
-- **[Theme Packs](https://oaysus.com/docs/theme-packs)** — Organize and distribute component collections
 
 ## Why Oaysus?
 
@@ -140,8 +174,15 @@ my-components/
 |---------------------|-------------|
 | Marketing files a ticket for every page change | Marketing creates pages themselves |
 | Developers build one-off landing pages | Developers build reusable components |
-| Every text change requires a deploy | Changes publish instantly |
+| Every text change requires a deploy | Changes publish instantly to global CDN |
 | Locked into proprietary CMS themes | Standard React/Vue/Svelte you own |
+
+## Documentation
+
+- **[Quick Start Guide](https://oaysus.com/docs/quickstart)** — Build your first component in 5 minutes
+- **[CLI Reference](https://oaysus.com/docs/cli)** — Complete command documentation
+- **[Component Guide](https://oaysus.com/docs/components)** — Props, schemas, and best practices
+- **[Theme Packs](https://oaysus.com/docs/theme-packs)** — Organize and distribute component collections
 
 ## Get Started
 
@@ -155,4 +196,4 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for development
 
 ## License
 
-MIT
+MIT © [Oaysus](https://oaysus.com)
