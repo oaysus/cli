@@ -22,12 +22,20 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/oaysus/cli/stargazers">
+    <img src="https://img.shields.io/github/stars/oaysus/cli?style=social" alt="GitHub stars" />
+  </a>
+  &nbsp;&nbsp;
   <a href="https://www.npmjs.com/package/@oaysus/cli">
     <img src="https://img.shields.io/npm/v/@oaysus/cli.svg" alt="npm version" />
   </a>
   <a href="https://opensource.org/licenses/MIT">
     <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT" />
   </a>
+</p>
+
+<p align="center">
+  <sub>If you find Oaysus useful, please consider giving us a ⭐ on GitHub!</sub>
 </p>
 
 <p align="center">
