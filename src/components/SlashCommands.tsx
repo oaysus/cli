@@ -37,7 +37,7 @@ export const SlashCommands: React.FC<SlashCommandsProps> = ({
       return true;
     });
 
-    return commands.slice(0, 10);
+    return commands.slice(0, 15);
   }, [searchQuery, isLoggedIn]);
 
   // Handle Enter key to select command

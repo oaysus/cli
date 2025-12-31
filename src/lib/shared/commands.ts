@@ -8,55 +8,83 @@ export interface Command {
   name: string;
   description: string;
   args?: string;
+  group?: 'theme' | 'site' | 'global';
 }
 
 /**
  * All available CLI commands
- * Ordered by importance/usage frequency
+ * Organized by group: theme, site, and global
  */
 export const COMMANDS: Command[] = [
-  // Project workflow
+  // Theme Pack Commands
   {
-    name: 'init',
-    description: 'Create a new component project',
+    name: 'theme init',
+    description: 'Create a new theme pack project',
+    group: 'theme',
   },
   {
-    name: 'create',
-    description: 'Add a component to your project',
+    name: 'theme create',
+    description: 'Add a component to your theme pack',
+    group: 'theme',
   },
   {
-    name: 'validate',
-    description: 'Validate component package structure',
+    name: 'theme validate',
+    description: 'Validate theme pack structure',
+    group: 'theme',
   },
   {
-    name: 'push',
-    description: 'Upload component package to Oaysus',
+    name: 'theme push',
+    description: 'Upload theme pack to Oaysus',
+    group: 'theme',
   },
   {
-    name: 'delete',
+    name: 'theme delete',
     description: 'Delete a theme pack from Oaysus',
+    group: 'theme',
   },
-  // Authentication
+
+  // Site/Website Commands
+  {
+    name: 'site init',
+    description: 'Create a new website project',
+    group: 'site',
+  },
+  {
+    name: 'site validate',
+    description: 'Validate pages against installed components',
+    group: 'site',
+  },
+  {
+    name: 'site publish',
+    description: 'Publish pages to your website',
+    group: 'site',
+  },
+
+  // Global Commands
   {
     name: 'login',
     description: 'Authenticate with your Oaysus account',
+    group: 'global',
   },
   {
     name: 'whoami',
     description: 'Display current user information',
+    group: 'global',
   },
   {
     name: 'switch',
     description: 'Switch between your websites',
+    group: 'global',
   },
   {
     name: 'logout',
     description: 'Clear authentication tokens',
+    group: 'global',
   },
-  // System
   {
     name: 'exit',
     description: 'Exit the CLI',
+    group: 'global',
   },
 ];
 
@@ -80,4 +108,20 @@ export function filterCommands(query: string): Command[] {
   return COMMANDS.filter(cmd =>
     cmd.name.toLowerCase().includes(normalized)
   );
+}
+
+/**
+ * Parse a command string into group and subcommand
+ * e.g., "theme init" -> { group: "theme", subCommand: "init" }
+ * e.g., "login" -> { group: "global", subCommand: "login" }
+ */
+export function parseCommand(commandName: string): {
+  group: string;
+  subCommand: string;
+} {
+  const parts = commandName.split(' ');
+  if (parts.length === 2) {
+    return { group: parts[0], subCommand: parts[1] };
+  }
+  return { group: 'global', subCommand: parts[0] };
 }

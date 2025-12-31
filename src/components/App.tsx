@@ -9,18 +9,27 @@ import { ValidateScreen } from '../screens/ValidateScreen.js';
 import { PushScreen } from '../screens/PushScreen.js';
 import { SwitchScreen } from '../screens/SwitchScreen.js';
 import { DeleteScreen } from '../screens/DeleteScreen.js';
+import { SiteInitScreen } from '../screens/site/SiteInitScreen.js';
+import { SiteValidateScreen } from '../screens/site/SiteValidateScreen.js';
+import { SitePublishScreen } from '../screens/site/SitePublishScreen.js';
 
 type Screen =
   | { type: 'welcome' }
-  | { type: 'init'; projectName?: string }
-  | { type: 'create'; componentName?: string; projectPath?: string }
+  // Theme pack commands
+  | { type: 'theme-init'; projectName?: string }
+  | { type: 'theme-create'; componentName?: string; projectPath?: string }
+  | { type: 'theme-validate'; projectPath?: string; dryRun?: boolean }
+  | { type: 'theme-push'; projectPath?: string }
+  | { type: 'theme-delete'; themeName?: string }
+  // Site commands
+  | { type: 'site-init'; projectName?: string }
+  | { type: 'site-validate'; projectPath?: string }
+  | { type: 'site-publish'; projectPath?: string; pageFile?: string; dryRun?: boolean }
+  // Global commands
   | { type: 'login' }
   | { type: 'whoami' }
   | { type: 'logout' }
-  | { type: 'validate'; projectPath?: string; dryRun?: boolean }
-  | { type: 'push'; projectPath?: string }
-  | { type: 'switch' }
-  | { type: 'delete'; themeName?: string };
+  | { type: 'switch' };
 
 export interface HistoryEntry {
   type: 'prompt' | 'response' | 'info' | 'success' | 'error' | 'progress' | 'spinner';
@@ -84,7 +93,8 @@ export const App: React.FC<AppProps> = ({ initialScreen, onExit }) => {
         />
       );
 
-    case 'init':
+    // Theme Pack Commands
+    case 'theme-init':
       return (
         <InitScreen
           projectName={currentScreen.projectName}
@@ -94,7 +104,7 @@ export const App: React.FC<AppProps> = ({ initialScreen, onExit }) => {
         />
       );
 
-    case 'create':
+    case 'theme-create':
       return (
         <CreateScreen
           componentName={currentScreen.componentName}
@@ -105,6 +115,76 @@ export const App: React.FC<AppProps> = ({ initialScreen, onExit }) => {
         />
       );
 
+    case 'theme-validate':
+      return (
+        <ValidateScreen
+          projectPath={currentScreen.projectPath || '.'}
+          dryRun={currentScreen.dryRun || false}
+          onExit={returnToWelcome}
+          sessionHistory={sessionHistory}
+          addToHistory={addToHistory}
+        />
+      );
+
+    case 'theme-push':
+      return (
+        <PushScreen
+          projectPath={currentScreen.projectPath || '.'}
+          onExit={returnToWelcome}
+          sessionHistory={sessionHistory}
+          addToHistory={addToHistory}
+          removeFromHistory={removeFromHistory}
+        />
+      );
+
+    case 'theme-delete':
+      return (
+        <DeleteScreen
+          themeName={currentScreen.themeName}
+          onExit={returnToWelcome}
+          sessionHistory={sessionHistory}
+          addToHistory={addToHistory}
+          removeFromHistory={removeFromHistory}
+        />
+      );
+
+    // Site Commands
+    case 'site-init':
+      return (
+        <SiteInitScreen
+          projectName={currentScreen.projectName}
+          onExit={returnToWelcome}
+          sessionHistory={sessionHistory}
+          addToHistory={addToHistory}
+          removeFromHistory={removeFromHistory}
+        />
+      );
+
+    case 'site-validate':
+      return (
+        <SiteValidateScreen
+          projectPath={currentScreen.projectPath || '.'}
+          onExit={returnToWelcome}
+          sessionHistory={sessionHistory}
+          addToHistory={addToHistory}
+          removeFromHistory={removeFromHistory}
+        />
+      );
+
+    case 'site-publish':
+      return (
+        <SitePublishScreen
+          projectPath={currentScreen.projectPath || '.'}
+          pageFile={currentScreen.pageFile}
+          dryRun={currentScreen.dryRun || false}
+          onExit={returnToWelcome}
+          sessionHistory={sessionHistory}
+          addToHistory={addToHistory}
+          removeFromHistory={removeFromHistory}
+        />
+      );
+
+    // Global Commands
     case 'login':
       return (
         <LoginScreen
@@ -134,45 +214,12 @@ export const App: React.FC<AppProps> = ({ initialScreen, onExit }) => {
         />
       );
 
-    case 'validate':
-      return (
-        <ValidateScreen
-          projectPath={currentScreen.projectPath || '.'}
-          dryRun={currentScreen.dryRun || false}
-          onExit={returnToWelcome}
-          sessionHistory={sessionHistory}
-          addToHistory={addToHistory}
-        />
-      );
-
-    case 'push':
-      return (
-        <PushScreen
-          projectPath={currentScreen.projectPath || '.'}
-          onExit={returnToWelcome}
-          sessionHistory={sessionHistory}
-          addToHistory={addToHistory}
-          removeFromHistory={removeFromHistory}
-        />
-      );
-
     case 'switch':
       return (
         <SwitchScreen
           onExit={returnToWelcome}
           sessionHistory={sessionHistory}
           addToHistory={addToHistory}
-        />
-      );
-
-    case 'delete':
-      return (
-        <DeleteScreen
-          themeName={currentScreen.themeName}
-          onExit={returnToWelcome}
-          sessionHistory={sessionHistory}
-          addToHistory={addToHistory}
-          removeFromHistory={removeFromHistory}
         />
       );
 

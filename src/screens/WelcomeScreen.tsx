@@ -15,15 +15,21 @@ import { HistoryEntry } from '../components/App.js';
 
 type Screen =
   | { type: 'welcome' }
-  | { type: 'init'; projectName?: string }
-  | { type: 'create'; componentName?: string; projectPath?: string }
+  // Theme pack commands
+  | { type: 'theme-init'; projectName?: string }
+  | { type: 'theme-create'; componentName?: string; projectPath?: string }
+  | { type: 'theme-validate'; projectPath?: string; dryRun?: boolean }
+  | { type: 'theme-push'; projectPath?: string }
+  | { type: 'theme-delete'; themeName?: string }
+  // Site commands
+  | { type: 'site-init'; projectName?: string }
+  | { type: 'site-validate'; projectPath?: string }
+  | { type: 'site-publish'; projectPath?: string; pageFile?: string; dryRun?: boolean }
+  // Global commands
   | { type: 'login' }
   | { type: 'whoami' }
   | { type: 'logout' }
-  | { type: 'validate'; projectPath?: string; dryRun?: boolean }
-  | { type: 'push'; projectPath?: string }
-  | { type: 'switch' }
-  | { type: 'delete'; themeName?: string };
+  | { type: 'switch' };
 
 interface WelcomeScreenProps {
   onNavigate?: (screen: Screen) => void;
@@ -137,16 +143,24 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNavigate, onExit
       return;
     }
 
-    // Extract command name from slash command
-    const commandName = trimmed.slice(1).split(' ')[0];
+    // Build full command name (may include space for subcommands like "theme init")
+    const parts = trimmed.slice(1).split(' ');
+    const fullCommandName = parts.length >= 2 ? `${parts[0]} ${parts[1]}` : parts[0];
 
     // Check if it's a valid command
-    const validCommands = ['init', 'create', 'login', 'whoami', 'logout', 'validate', 'push', 'switch', 'delete', 'exit'];
-    if (!validCommands.includes(commandName)) {
+    const validCommands = [
+      // Theme commands
+      'theme init', 'theme create', 'theme validate', 'theme push', 'theme delete',
+      // Site commands
+      'site init', 'site validate', 'site publish',
+      // Global commands
+      'login', 'whoami', 'logout', 'switch', 'exit'
+    ];
+    if (!validCommands.includes(fullCommandName)) {
       if (addToHistory) {
         addToHistory({
           type: 'info',
-          content: `Unknown command: "/${commandName}". Type / to see available commands.`
+          content: `Unknown command: "/${fullCommandName}". Type / to see available commands.`
         });
       }
       setCommandInput('');
@@ -154,7 +168,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNavigate, onExit
     }
 
     // Handle the command via slash select
-    handleSlashSelect(commandName);
+    handleSlashSelect(fullCommandName);
   };
 
   // Handle slash command selection
@@ -175,12 +189,33 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNavigate, onExit
     // Navigate to command screen
     if (onNavigate) {
       switch (commandName) {
-        case 'init':
-          onNavigate({ type: 'init' });
+        // Theme commands
+        case 'theme init':
+          onNavigate({ type: 'theme-init' });
           break;
-        case 'create':
-          onNavigate({ type: 'create' });
+        case 'theme create':
+          onNavigate({ type: 'theme-create' });
           break;
+        case 'theme validate':
+          onNavigate({ type: 'theme-validate' });
+          break;
+        case 'theme push':
+          onNavigate({ type: 'theme-push' });
+          break;
+        case 'theme delete':
+          onNavigate({ type: 'theme-delete' });
+          break;
+        // Site commands
+        case 'site init':
+          onNavigate({ type: 'site-init' });
+          break;
+        case 'site validate':
+          onNavigate({ type: 'site-validate' });
+          break;
+        case 'site publish':
+          onNavigate({ type: 'site-publish' });
+          break;
+        // Global commands
         case 'login':
           onNavigate({ type: 'login' });
           break;
@@ -190,17 +225,8 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNavigate, onExit
         case 'logout':
           onNavigate({ type: 'logout' });
           break;
-        case 'validate':
-          onNavigate({ type: 'validate' });
-          break;
-        case 'push':
-          onNavigate({ type: 'push' });
-          break;
         case 'switch':
           onNavigate({ type: 'switch' });
-          break;
-        case 'delete':
-          onNavigate({ type: 'delete' });
           break;
         default:
           break;
@@ -229,7 +255,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNavigate, onExit
       return true;
     });
 
-    const filteredCount = Math.min(commands.length, 10);
+    const filteredCount = Math.min(commands.length, 15);
 
     if (direction === 'up') {
       setSelectedCommandIndex(prev => (prev > 0 ? prev - 1 : filteredCount - 1));
@@ -267,7 +293,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNavigate, onExit
         return true;
       });
 
-      const filteredCmds = commands.slice(0, 10);
+      const filteredCmds = commands.slice(0, 15);
 
       if (filteredCmds.length > 0 && filteredCmds[selectedCommandIndex]) {
         const selectedCommand = filteredCmds[selectedCommandIndex].name;
