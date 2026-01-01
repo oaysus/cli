@@ -1,6 +1,7 @@
 /**
  * Website Project Loader
- * Loads oaysus.website.json and pages/*.json files
+ * Loads project config and pages/*.json files
+ * Supports both new .oaysus/ metadata and legacy oaysus.website.json
  */
 
 import fs from 'fs/promises';
@@ -14,6 +15,11 @@ import type {
   ComponentInstance,
   PageSettings,
 } from '../../types/site.js';
+import {
+  loadConfig as loadOaysusConfig,
+  findProjectRoot as findOaysusProjectRoot,
+  getWebsiteId,
+} from './metadata.js';
 
 // Zod Schemas for validation
 const ComponentInstanceSchema = z.object({
@@ -76,43 +82,53 @@ async function fileExists(filePath: string): Promise<boolean> {
 }
 
 /**
- * Find the website project root by looking for oaysus.website.json
+ * Find the website project root by looking for .oaysus/ or oaysus.website.json
+ * Uses the metadata module's findProjectRoot which handles both cases
  */
 export async function findProjectRoot(startPath: string = process.cwd()): Promise<string | null> {
-  let currentPath = path.resolve(startPath);
-
-  for (let i = 0; i < 10; i++) {
-    const configPath = path.join(currentPath, 'oaysus.website.json');
-    if (await fileExists(configPath)) {
-      return currentPath;
-    }
-
-    const parentPath = path.dirname(currentPath);
-    if (parentPath === currentPath) break;
-    currentPath = parentPath;
-  }
-
-  return null;
+  return findOaysusProjectRoot(startPath);
 }
 
 /**
- * Load and validate the website configuration file
+ * Load and validate the website configuration
+ * Checks .oaysus/config.json first, falls back to legacy oaysus.website.json
  */
 export async function loadWebsiteConfig(projectPath: string): Promise<{
   config: WebsiteConfig | null;
   error: string | null;
 }> {
-  const configPath = path.join(projectPath, 'oaysus.website.json');
+  // Try new .oaysus/config.json first
+  const oaysusConfig = await loadOaysusConfig(projectPath);
+  if (oaysusConfig) {
+    return {
+      config: {
+        websiteId: oaysusConfig.websiteId,
+      },
+      error: null,
+    };
+  }
 
-  if (!await fileExists(configPath)) {
+  // Fall back to legacy oaysus.website.json
+  const legacyPath = path.join(projectPath, 'oaysus.website.json');
+
+  if (!await fileExists(legacyPath)) {
+    // Check if we can get websiteId from credentials
+    const websiteId = await getWebsiteId(projectPath);
+    if (websiteId) {
+      return {
+        config: { websiteId },
+        error: null,
+      };
+    }
+
     return {
       config: null,
-      error: 'Missing oaysus.website.json configuration file',
+      error: 'No project configuration found. Run "oaysus site init" to set up this project.',
     };
   }
 
   try {
-    const content = await fs.readFile(configPath, 'utf-8');
+    const content = await fs.readFile(legacyPath, 'utf-8');
     const parsed = JSON.parse(content);
 
     const validation = WebsiteConfigSchema.safeParse(parsed);

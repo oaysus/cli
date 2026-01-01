@@ -15,6 +15,7 @@ import type {
 import { loadCredentials } from '../shared/auth.js';
 import { SSO_BASE_URL, debug } from '../shared/config.js';
 import { findAssetsInPage, assetExists } from './asset-resolver.js';
+import { loadComponentCatalog, syncComponentCatalog, isCatalogStale } from './metadata.js';
 
 /**
  * Fetch installed components for a website
@@ -181,10 +182,56 @@ export async function validateProject(
     };
   }
 
-  // Fetch installed components
+  // Get installed components from local catalog or fetch from server
   let installedComponents: InstalledComponent[] = [];
   try {
-    installedComponents = await fetchInstalledComponents(websiteId, jwt!);
+    // Check local catalog first
+    const catalog = await loadComponentCatalog(project.projectPath);
+    const isStale = await isCatalogStale(project.projectPath);
+
+    if (catalog && catalog.themePacks.length > 0 && !isStale) {
+      // Use local catalog
+      debug('Using local component catalog');
+      for (const pack of catalog.themePacks) {
+        for (const comp of pack.components) {
+          installedComponents.push({
+            id: `${pack.id}:${comp.type}`,
+            name: comp.type,
+            displayName: comp.displayName,
+            sourceThemePackId: pack.id,
+            sourceThemePackName: pack.name,
+            schema: comp.schema as Record<string, unknown> | undefined,
+          });
+        }
+      }
+    } else {
+      // Sync catalog from server
+      debug('Syncing component catalog from server');
+      const syncResult = await syncComponentCatalog({
+        projectPath: project.projectPath,
+        websiteId,
+        jwt,
+        force: true,
+      });
+
+      if (syncResult.success && syncResult.catalog) {
+        for (const pack of syncResult.catalog.themePacks) {
+          for (const comp of pack.components) {
+            installedComponents.push({
+              id: `${pack.id}:${comp.type}`,
+              name: comp.type,
+              displayName: comp.displayName,
+              sourceThemePackId: pack.id,
+              sourceThemePackName: pack.name,
+              schema: comp.schema as Record<string, unknown> | undefined,
+            });
+          }
+        }
+      } else {
+        // Fallback to direct API fetch if sync fails
+        installedComponents = await fetchInstalledComponents(websiteId, jwt!);
+      }
+    }
   } catch (error) {
     return {
       valid: false,

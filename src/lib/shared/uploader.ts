@@ -87,6 +87,7 @@ export interface UploadOptions {
   importMap?: Record<string, any>;
   stylesheets?: Record<string, string>;
   dependencies?: Array<{ name: string; version: string }>;
+  bannerPath?: string | null;  // Path to banner image (e.g., 'marketing/banner.svg')
   onFilesCollected?: FileMetadataCallback;
 }
 
@@ -424,7 +425,8 @@ export async function uploadBuildFilesToR2(
       importMap: uploadMetadata.importMap,
       stylesheets: uploadMetadata.stylesheets,
       dependencies: uploadMetadata.dependencies,
-      tags: packageJson.oaysus?.theme?.tags || []
+      tags: packageJson.oaysus?.theme?.tags || [],
+      bannerPath: options?.bannerPath || null  // Path to banner image for server to resolve
     },
     hash: hashString,
     totalSize
@@ -612,7 +614,8 @@ export async function uploadBuildFilesToR2Streaming(
       importMap: uploadMetadata.importMap,
       stylesheets: uploadMetadata.stylesheets,
       dependencies: uploadMetadata.dependencies,
-      tags: packageJson.oaysus?.theme?.tags || []
+      tags: packageJson.oaysus?.theme?.tags || [],
+      bannerPath: options?.bannerPath || null  // Path to banner image for server to resolve
     },
     hash: hashString,
     totalSize

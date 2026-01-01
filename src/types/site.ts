@@ -222,3 +222,148 @@ export interface LoadedProject {
   /** Load errors */
   errors: string[];
 }
+
+// ============================================================================
+// .oaysus/ Metadata Types
+// ============================================================================
+
+/**
+ * Project configuration stored in .oaysus/config.json
+ */
+export interface OaysusConfig {
+  /** Version of config format */
+  version: 1;
+  /** Website ID this project is linked to */
+  websiteId: string;
+  /** Website name for display */
+  websiteName?: string;
+  /** Website subdomain */
+  subdomain?: string;
+  /** Last time metadata was synced from server */
+  lastSyncedAt?: string;
+}
+
+/**
+ * Component schema property definition
+ */
+export interface ComponentSchemaProperty {
+  type: string;
+  title?: string;
+  description?: string;
+  default?: unknown;
+  enum?: unknown[];
+  items?: ComponentSchemaProperty;
+  properties?: Record<string, ComponentSchemaProperty>;
+}
+
+/**
+ * Component schema definition
+ */
+export interface ComponentSchema {
+  type?: string;
+  properties?: Record<string, ComponentSchemaProperty>;
+  required?: string[];
+}
+
+/**
+ * Component definition in the catalog
+ */
+export interface CatalogComponent {
+  /** Full component type name (e.g., "fitness-starter_GymHero") */
+  type: string;
+  /** Display name for humans */
+  displayName: string;
+  /** Component description */
+  description?: string;
+  /** Category for organization */
+  category?: string;
+  /** Component prop schema */
+  schema?: ComponentSchema;
+  /** Default prop values */
+  defaultProps?: Record<string, unknown>;
+}
+
+/**
+ * Theme pack in the catalog
+ */
+export interface CatalogThemePack {
+  /** Theme pack ID */
+  id: string;
+  /** Theme pack name */
+  name: string;
+  /** Installed version */
+  version?: string;
+  /** Whether currently installed on the website */
+  installed: boolean;
+  /** Components in this theme pack */
+  components: CatalogComponent[];
+}
+
+/**
+ * Component catalog stored in .oaysus/components.json
+ */
+export interface ComponentCatalog {
+  /** Version of catalog format */
+  version: 1;
+  /** When the catalog was last synced */
+  lastSyncedAt: string;
+  /** Website ID this catalog is for */
+  websiteId: string;
+  /** Theme packs and their components */
+  themePacks: CatalogThemePack[];
+  /** Quick lookup: all component types available */
+  allComponentTypes: string[];
+}
+
+/**
+ * Result of syncing component catalog
+ */
+export interface ComponentCatalogSyncResult {
+  success: boolean;
+  catalog?: ComponentCatalog;
+  error?: string;
+  /** Number of components synced */
+  componentCount: number;
+  /** Number of theme packs synced */
+  themePackCount: number;
+}
+
+/**
+ * Result of initializing metadata
+ */
+export interface MetadataInitResult {
+  success: boolean;
+  error?: string;
+}
+
+/**
+ * Asset manifest stored in .oaysus/assets.json
+ */
+export interface AssetManifest {
+  /** Version of manifest format */
+  version: 1;
+  /** Map of filename to asset metadata */
+  assets: Record<string, AssetManifestEntry>;
+}
+
+/**
+ * Single asset entry in the manifest
+ */
+export interface AssetManifestEntry {
+  /** CDN URL for the asset */
+  url: string;
+  /** MIME type */
+  contentType: string;
+  /** File size in bytes */
+  sizeInBytes: number;
+  /** Image width (if applicable) */
+  width?: number;
+  /** Image height (if applicable) */
+  height?: number;
+  /** Alt text for accessibility */
+  altText?: string;
+  /** Title/caption */
+  title?: string;
+  /** SHA-256 content hash for change detection */
+  contentHash: string;
+}

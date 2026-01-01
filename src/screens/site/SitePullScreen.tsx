@@ -4,10 +4,11 @@ import path from 'path';
 import { Logo } from '../../components/Logo.js';
 import { Spinner } from '../../components/Spinner.js';
 import { ProgressBar } from '../../components/ProgressBar.js';
-import { loadProject } from '../../lib/site/index.js';
+import { loadProject, syncComponentCatalog } from '../../lib/site/index.js';
 import { pullPages, previewPull, PullResult, PullPreviewPage } from '../../lib/site/page-puller.js';
 import { pullAssets, previewAssetPull, AssetPullResult, formatBytes } from '../../lib/site/asset-puller.js';
 import { loadCredentials } from '../../lib/shared/auth.js';
+import type { ComponentCatalogSyncResult } from '../../types/site.js';
 import { HistoryEntry } from '../../components/App.js';
 import type { WebsiteConfig } from '../../types/site.js';
 
@@ -21,7 +22,7 @@ interface Props {
   removeFromHistory?: (spinnerId: string) => void;
 }
 
-type Screen = 'loading' | 'preview' | 'pulling-pages' | 'pulling-assets' | 'success' | 'error';
+type Screen = 'loading' | 'preview' | 'syncing-catalog' | 'pulling-pages' | 'pulling-assets' | 'success' | 'error';
 
 export function SitePullScreen({
   projectPath = '.',
@@ -35,6 +36,7 @@ export function SitePullScreen({
   const [screen, setScreen] = useState<Screen>('loading');
   const [pullResult, setPullResult] = useState<PullResult | null>(null);
   const [assetResult, setAssetResult] = useState<AssetPullResult | null>(null);
+  const [catalogResult, setCatalogResult] = useState<ComponentCatalogSyncResult | null>(null);
   const [error, setError] = useState<string>('');
   const [directory] = useState(path.resolve(projectPath));
   const [userEmail, setUserEmail] = useState<string | null>(null);
@@ -232,6 +234,16 @@ export function SitePullScreen({
   // Run pull operation
   const runPullWithConfig = async (projPath: string, config: WebsiteConfig) => {
     try {
+      // Phase 0: Sync component catalog
+      setScreen('syncing-catalog');
+
+      const catResult = await syncComponentCatalog({
+        projectPath: projPath,
+        websiteId: config.websiteId,
+        force: true,
+      });
+      setCatalogResult(catResult);
+
       // Phase 1: Pull pages
       setScreen('pulling-pages');
 
@@ -281,6 +293,14 @@ export function SitePullScreen({
       if (result.success || assetRes.success) {
         if (addToHistory) {
           const successLines: HistoryEntry[] = [];
+
+          // Component catalog summary
+          if (catResult.success && catResult.componentCount > 0) {
+            successLines.push({
+              type: 'success',
+              content: `✓ Synced component catalog (${catResult.componentCount} components from ${catResult.themePackCount} theme pack${catResult.themePackCount === 1 ? '' : 's'})`
+            });
+          }
 
           // Pages summary
           if (result.written > 0) {
@@ -528,6 +548,10 @@ export function SitePullScreen({
               </Text>
             </Box>
           </Box>
+        )}
+
+        {screen === 'syncing-catalog' && (
+          <Spinner type="dots" color="cyan" message="Syncing component catalog..." />
         )}
 
         {screen === 'pulling-pages' && (

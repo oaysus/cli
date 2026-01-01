@@ -216,6 +216,43 @@ export async function push(options: PushOptions = {}): Promise<PushResult> {
     );
     logSuccess(`Generated import map (${Object.keys(importMap.imports).length} entries)`, silent);
 
+    // Step 9.5: Copy marketing assets (banner, preview images)
+    const marketingDir = path.join(absolutePath, 'marketing');
+    let bannerPath: string | null = null;
+
+    if (fs.existsSync(marketingDir)) {
+      const marketingOutputDir = path.join(buildResult.outputDir, 'marketing');
+      fs.mkdirSync(marketingOutputDir, { recursive: true });
+
+      // Look for banner image (support common formats)
+      const bannerExtensions = ['.png', '.jpg', '.jpeg', '.svg', '.webp'];
+      for (const ext of bannerExtensions) {
+        const bannerFile = path.join(marketingDir, `banner${ext}`);
+        if (fs.existsSync(bannerFile)) {
+          const destFile = path.join(marketingOutputDir, `banner${ext}`);
+          fs.copyFileSync(bannerFile, destFile);
+          bannerPath = `marketing/banner${ext}`;
+          logSuccess(`Copied marketing banner: banner${ext}`, silent);
+          break;
+        }
+      }
+
+      // Copy any preview images
+      const previewFiles = fs.readdirSync(marketingDir).filter(f =>
+        f.startsWith('preview') && bannerExtensions.some(ext => f.endsWith(ext))
+      );
+      for (const previewFile of previewFiles) {
+        fs.copyFileSync(
+          path.join(marketingDir, previewFile),
+          path.join(marketingOutputDir, previewFile)
+        );
+      }
+
+      if (previewFiles.length > 0) {
+        logSuccess(`Copied ${previewFiles.length} preview image(s)`, silent);
+      }
+    }
+
     // Step 10: Upload to R2
     log('\nUploading to server...', silent);
 
@@ -238,7 +275,8 @@ export async function push(options: PushOptions = {}): Promise<PushResult> {
       {
         importMap,
         stylesheets,
-        dependencies: dependenciesArray
+        dependencies: dependenciesArray,
+        bannerPath  // Pass banner path for backend to store
       }
     );
 

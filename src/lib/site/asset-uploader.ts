@@ -12,50 +12,19 @@ import type {
   AssetReference,
   ResolvedAsset,
   UploadedAssetInfo,
+  AssetManifest,
+  AssetManifestEntry,
 } from '../../types/site.js';
 import { loadCredentials } from '../shared/auth.js';
 import { SSO_BASE_URL, debug } from '../shared/config.js';
 import { resolveAssetPath, getAssetInfo } from './asset-resolver.js';
-import type { AssetManifest, AssetManifestEntry } from './asset-puller.js';
+import { loadAssetManifest, saveAssetManifest } from './metadata.js';
 
 /**
  * Compute SHA-256 hash of a buffer
  */
 function computeHash(buffer: Buffer): string {
   return crypto.createHash('sha256').update(buffer).digest('hex');
-}
-
-/**
- * Load the assets.json manifest
- */
-async function loadManifest(projectPath: string): Promise<AssetManifest> {
-  const manifestPath = path.join(projectPath, 'assets', 'assets.json');
-
-  try {
-    const content = await fs.readFile(manifestPath, 'utf-8');
-    return JSON.parse(content);
-  } catch {
-    // Return empty manifest if file doesn't exist
-    return { version: 1, assets: {} };
-  }
-}
-
-/**
- * Save the assets.json manifest
- */
-async function saveManifest(projectPath: string, manifest: AssetManifest): Promise<void> {
-  const assetsDir = path.join(projectPath, 'assets');
-
-  // Ensure assets directory exists
-  try {
-    await fs.mkdir(assetsDir, { recursive: true });
-  } catch {
-    // Directory may already exist
-  }
-
-  const manifestPath = path.join(assetsDir, 'assets.json');
-  const content = JSON.stringify(manifest, null, 2);
-  await fs.writeFile(manifestPath, content, 'utf-8');
 }
 
 /**
@@ -262,7 +231,7 @@ export async function uploadAssets(
   // Load existing manifest for updates
   let manifest: AssetManifest | null = null;
   if (updateManifest) {
-    manifest = await loadManifest(projectPath);
+    manifest = await loadAssetManifest(projectPath);
   }
 
   // Upload each asset
@@ -311,7 +280,7 @@ export async function uploadAssets(
 
   // Save updated manifest
   if (manifest && successCount > 0) {
-    await saveManifest(projectPath, manifest);
+    await saveAssetManifest(projectPath, manifest);
   }
 
   return {

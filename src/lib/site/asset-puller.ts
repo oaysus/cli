@@ -8,41 +8,13 @@ import axios from 'axios';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as crypto from 'crypto';
-import type { WebsiteConfig } from '../../types/site.js';
+import type { WebsiteConfig, AssetManifest, AssetManifestEntry } from '../../types/site.js';
 import { loadCredentials } from '../shared/auth.js';
 import { SSO_BASE_URL, debug } from '../shared/config.js';
+import { loadAssetManifest, saveAssetManifest } from './metadata.js';
 
-/**
- * Asset metadata stored in assets.json manifest
- */
-export interface AssetManifestEntry {
-  /** CDN URL for the asset */
-  url: string;
-  /** MIME type */
-  contentType: string;
-  /** File size in bytes */
-  sizeInBytes: number;
-  /** Image width (if applicable) */
-  width?: number;
-  /** Image height (if applicable) */
-  height?: number;
-  /** Alt text for accessibility */
-  altText?: string;
-  /** Title/caption */
-  title?: string;
-  /** SHA-256 content hash for change detection */
-  contentHash: string;
-}
-
-/**
- * The assets.json manifest structure
- */
-export interface AssetManifest {
-  /** Version of the manifest format */
-  version: 1;
-  /** Map of filename to asset metadata */
-  assets: Record<string, AssetManifestEntry>;
-}
+// Re-export types for backward compatibility
+export type { AssetManifest, AssetManifestEntry };
 
 /**
  * Result of pulling a single asset
@@ -122,29 +94,8 @@ async function fileExists(filePath: string): Promise<boolean> {
   }
 }
 
-/**
- * Load the assets.json manifest
- */
-async function loadManifest(projectPath: string): Promise<AssetManifest> {
-  const manifestPath = path.join(projectPath, 'assets', 'assets.json');
-
-  try {
-    const content = await fs.readFile(manifestPath, 'utf-8');
-    return JSON.parse(content);
-  } catch {
-    // Return empty manifest if file doesn't exist
-    return { version: 1, assets: {} };
-  }
-}
-
-/**
- * Save the assets.json manifest
- */
-async function saveManifest(projectPath: string, manifest: AssetManifest): Promise<void> {
-  const manifestPath = path.join(projectPath, 'assets', 'assets.json');
-  const content = JSON.stringify(manifest, null, 2);
-  await fs.writeFile(manifestPath, content, 'utf-8');
-}
+// loadAssetManifest and saveAssetManifest are now imported from metadata.ts
+// as loadAssetManifest and saveAssetManifest
 
 /**
  * Fetch all assets from the server
@@ -285,7 +236,7 @@ export async function previewAssetPull(options: {
   }
 
   // Load existing manifest
-  const manifest = await loadManifest(projectPath);
+  const manifest = await loadAssetManifest(projectPath);
   const assetsDir = path.join(projectPath, 'assets');
 
   const assets: PullAssetPreview[] = [];
@@ -442,7 +393,7 @@ export async function pullAssets(options: {
   }
 
   // Load existing manifest
-  const manifest = await loadManifest(projectPath);
+  const manifest = await loadAssetManifest(projectPath);
 
   // Process each asset
   const results: PullAssetResult[] = [];
@@ -543,7 +494,7 @@ export async function pullAssets(options: {
 
   // Save updated manifest
   if (!dryRun && downloaded > 0) {
-    await saveManifest(projectPath, manifest);
+    await saveAssetManifest(projectPath, manifest);
   }
 
   return {

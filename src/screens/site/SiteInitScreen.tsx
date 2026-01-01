@@ -2,12 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Box, Text, useInput } from 'ink';
 import path from 'path';
 import fs from 'fs/promises';
-import axios from 'axios';
 import { Logo } from '../../components/Logo.js';
 import { Spinner } from '../../components/Spinner.js';
 import { loadCredentials } from '../../lib/shared/auth.js';
 import { HistoryEntry } from '../../components/App.js';
-import { SSO_BASE_URL } from '../../lib/shared/config.js';
+import { initializeMetadata } from '../../lib/site/metadata.js';
 
 interface Props {
   projectName?: string;
@@ -29,7 +28,9 @@ export function SiteInitScreen({
   const [screen, setScreen] = useState<Screen>('loading');
   const [projectName, setProjectName] = useState(initialName || '');
   const [websiteName, setWebsiteName] = useState<string>('');
-  const [themePacks, setThemePacks] = useState<string[]>([]);
+  const [websiteId, setWebsiteId] = useState<string>('');
+  const [subdomain, setSubdomain] = useState<string>('');
+  const [jwt, setJwt] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [projectPath, setProjectPath] = useState<string>('');
   const [directory] = useState(process.cwd());
@@ -67,23 +68,9 @@ export function SiteInitScreen({
 
       setUserEmail(creds.email);
       setWebsiteName(creds.websiteName || '');
-
-      // Fetch installed theme packs from API
-      try {
-        const response = await axios.get<{ success: boolean; themePacks: Array<{ name: string }> }>(
-          `${SSO_BASE_URL}/sso/cli/theme-packs`,
-          {
-            headers: { Authorization: `Bearer ${creds.jwt}` },
-            params: { websiteId: creds.websiteId }
-          }
-        );
-
-        if (response.data.success && response.data.themePacks) {
-          setThemePacks(response.data.themePacks.map(tp => tp.name));
-        }
-      } catch {
-        // If API fails, continue with empty theme packs - not a critical error
-      }
+      setWebsiteId(creds.websiteId || '');
+      setSubdomain(creds.subdomain || '');
+      setJwt(creds.jwt || '');
 
       // Use subdomain as folder name (already URL-safe)
       const folderName = initialName || creds.subdomain || 'my-website';
@@ -169,15 +156,30 @@ export function SiteInitScreen({
       await fs.mkdir(path.join(targetPath, 'pages'), { recursive: true });
       await fs.mkdir(path.join(targetPath, 'assets'), { recursive: true });
 
-      // Create oaysus.website.json with theme packs only
-      // websiteId comes from credentials - no need to store it in config (security risk if committed)
-      const configContent = {
-        themePacks: themePacks
-      };
-      await fs.writeFile(
-        path.join(targetPath, 'oaysus.website.json'),
-        JSON.stringify(configContent, null, 2)
-      );
+      // Initialize .oaysus/ metadata (config.json, components.json, assets.json)
+      const initResult = await initializeMetadata({
+        projectPath: targetPath,
+        websiteId,
+        websiteName,
+        subdomain,
+        syncComponents: true,
+        jwt,
+      });
+
+      if (!initResult.success) {
+        if (removeFromHistory) {
+          removeFromHistory('generating');
+        }
+        if (addToHistory) {
+          addToHistory({
+            type: 'error',
+            content: `✗ Failed to initialize project: ${initResult.error}`
+          });
+        }
+        setError(initResult.error || 'Failed to initialize project');
+        setScreen('error');
+        return;
+      }
 
       // Create sample home page (empty components - user adds their installed components)
       const homePage = {
@@ -314,7 +316,10 @@ export function SiteInitScreen({
             <Box marginTop={1} flexDirection="column" paddingLeft={2}>
               <Text dimColor>Structure:</Text>
               <Text dimColor>  {projectName}/</Text>
-              <Text dimColor>  ├── oaysus.website.json</Text>
+              <Text dimColor>  ├── .oaysus/</Text>
+              <Text dimColor>  │   ├── config.json</Text>
+              <Text dimColor>  │   ├── components.json</Text>
+              <Text dimColor>  │   └── assets.json</Text>
               <Text dimColor>  ├── pages/</Text>
               <Text dimColor>  │   └── home.json</Text>
               <Text dimColor>  └── assets/</Text>
