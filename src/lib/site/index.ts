@@ -9,3 +9,4 @@ export * from './page-validator.js';
 export * from './asset-uploader.js';
 export * from './page-publisher.js';
 export * from './page-puller.js';
+export * from './asset-puller.js';

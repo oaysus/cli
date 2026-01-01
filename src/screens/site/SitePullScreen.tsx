@@ -6,6 +6,7 @@ import { Spinner } from '../../components/Spinner.js';
 import { ProgressBar } from '../../components/ProgressBar.js';
 import { loadProject } from '../../lib/site/index.js';
 import { pullPages, previewPull, PullResult, PullPreviewPage } from '../../lib/site/page-puller.js';
+import { pullAssets, previewAssetPull, AssetPullResult, formatBytes } from '../../lib/site/asset-puller.js';
 import { loadCredentials } from '../../lib/shared/auth.js';
 import { HistoryEntry } from '../../components/App.js';
 import type { WebsiteConfig } from '../../types/site.js';
@@ -20,7 +21,7 @@ interface Props {
   removeFromHistory?: (spinnerId: string) => void;
 }
 
-type Screen = 'loading' | 'preview' | 'pulling' | 'success' | 'error';
+type Screen = 'loading' | 'preview' | 'pulling-pages' | 'pulling-assets' | 'success' | 'error';
 
 export function SitePullScreen({
   projectPath = '.',
@@ -33,14 +34,18 @@ export function SitePullScreen({
 }: Props) {
   const [screen, setScreen] = useState<Screen>('loading');
   const [pullResult, setPullResult] = useState<PullResult | null>(null);
+  const [assetResult, setAssetResult] = useState<AssetPullResult | null>(null);
   const [error, setError] = useState<string>('');
   const [directory] = useState(path.resolve(projectPath));
   const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [progress, setProgress] = useState({ current: 0, total: 0, detail: '' });
+  const [progress, setProgress] = useState({ current: 0, total: 0, detail: '', stage: '' });
 
   // Preview state
   const [newPages, setNewPages] = useState<PullPreviewPage[]>([]);
   const [existingPages, setExistingPages] = useState<PullPreviewPage[]>([]);
+  const [assetsToDownload, setAssetsToDownload] = useState<number>(0);
+  const [assetsUpToDate, setAssetsUpToDate] = useState<number>(0);
+  const [totalDownloadSize, setTotalDownloadSize] = useState<number>(0);
   const [loadedConfig, setLoadedConfig] = useState<WebsiteConfig | null>(null);
   const [loadedProjectPath, setLoadedProjectPath] = useState<string>('');
 
@@ -161,11 +166,17 @@ export function SitePullScreen({
           return;
         }
 
-        if (preview.pages.length === 0) {
+        // Also preview assets
+        const assetPreview = await previewAssetPull({
+          projectPath: project.projectPath,
+          config: project.config,
+        });
+
+        if (preview.pages.length === 0 && (!assetPreview.success || assetPreview.toDownload.length === 0)) {
           if (addToHistory) {
             addToHistory({
               type: 'info',
-              content: 'No pages found on server',
+              content: 'No pages or assets to pull',
               color: 'yellow'
             });
           }
@@ -175,6 +186,13 @@ export function SitePullScreen({
 
         setNewPages(preview.newPages);
         setExistingPages(preview.existingPages);
+
+        // Set asset preview state
+        if (assetPreview.success) {
+          setAssetsToDownload(assetPreview.toDownload.length);
+          setAssetsUpToDate(assetPreview.upToDate.length);
+          setTotalDownloadSize(assetPreview.totalDownloadSize);
+        }
 
         // If force flag or no existing pages, proceed directly
         if (force || preview.existingPages.length === 0) {
@@ -214,51 +232,117 @@ export function SitePullScreen({
   // Run pull operation
   const runPullWithConfig = async (projPath: string, config: WebsiteConfig) => {
     try {
-      setScreen('pulling');
+      // Phase 1: Pull pages
+      setScreen('pulling-pages');
 
-      // Progress callback
-      const onProgress = (
+      const onPageProgress = (
         stage: 'fetching' | 'writing',
         current: number,
         total: number,
         detail?: string
       ) => {
-        setProgress({ current, total, detail: detail || '' });
+        setProgress({ current, total, detail: detail || '', stage: 'pages' });
       };
 
-      // Run pull with force since user confirmed (or force flag was set)
       const result = await pullPages({
         projectPath: projPath,
         config,
         force: true,
         dryRun,
-        onProgress,
+        onProgress: onPageProgress,
       });
 
       setPullResult(result);
 
-      if (result.success) {
+      // Phase 2: Pull assets
+      setScreen('pulling-assets');
+      setProgress({ current: 0, total: 0, detail: '', stage: 'assets' });
+
+      const onAssetProgress = (
+        stage: 'fetching' | 'downloading',
+        current: number,
+        total: number,
+        detail?: string
+      ) => {
+        setProgress({ current, total, detail: detail || '', stage: 'assets' });
+      };
+
+      const assetRes = await pullAssets({
+        projectPath: projPath,
+        config,
+        force,
+        dryRun,
+        onProgress: onAssetProgress,
+      });
+
+      setAssetResult(assetRes);
+
+      // Show results
+      if (result.success || assetRes.success) {
         if (addToHistory) {
           const successLines: HistoryEntry[] = [];
 
-          successLines.push({
-            type: 'success',
-            content: dryRun
-              ? `✓ Dry run complete!`
-              : `✓ Pulled ${result.written} page${result.written === 1 ? '' : 's'}`
-          });
-
+          // Pages summary
           if (result.written > 0) {
+            successLines.push({
+              type: 'success',
+              content: dryRun
+                ? `✓ Dry run: ${result.written} page${result.written === 1 ? '' : 's'}`
+                : `✓ Pulled ${result.written} page${result.written === 1 ? '' : 's'}`
+            });
+
             for (const page of result.pages) {
               if (page.action === 'created' || page.action === 'updated') {
                 const icon = page.action === 'created' ? '+' : '~';
                 successLines.push({
                   type: 'info',
-                  content: `  ${icon} ${page.file} (${page.slug})`,
+                  content: `  ${icon} ${page.file}`,
                   color: 'dim'
                 });
               }
             }
+          }
+
+          // Assets summary
+          if (assetRes.downloaded > 0 || assetRes.skipped > 0) {
+            successLines.push({
+              type: 'success',
+              content: dryRun
+                ? `✓ Dry run: ${assetRes.downloaded} asset${assetRes.downloaded === 1 ? '' : 's'}`
+                : `✓ Downloaded ${assetRes.downloaded} asset${assetRes.downloaded === 1 ? '' : 's'}${assetRes.skipped > 0 ? `, ${assetRes.skipped} up-to-date` : ''}`
+            });
+
+            // Show downloaded assets (limit to 5)
+            const downloadedAssets = assetRes.assets.filter(a => a.action === 'downloaded');
+            const showCount = Math.min(downloadedAssets.length, 5);
+            for (let i = 0; i < showCount; i++) {
+              successLines.push({
+                type: 'info',
+                content: `  + assets/${downloadedAssets[i].filename}`,
+                color: 'dim'
+              });
+            }
+            if (downloadedAssets.length > 5) {
+              successLines.push({
+                type: 'info',
+                content: `  ... and ${downloadedAssets.length - 5} more`,
+                color: 'dim'
+              });
+            }
+          } else if (assetRes.total > 0 && assetRes.downloaded === 0) {
+            successLines.push({
+              type: 'info',
+              content: `✓ All ${assetRes.total} assets up-to-date`,
+              color: 'dim'
+            });
+          }
+
+          if (successLines.length === 0) {
+            successLines.push({
+              type: 'info',
+              content: 'Nothing to pull',
+              color: 'yellow'
+            });
           }
 
           addToHistory(successLines);
@@ -270,7 +354,7 @@ export function SitePullScreen({
             { type: 'error', content: '✗ Pull failed' }
           ];
 
-          for (const err of result.errors) {
+          for (const err of [...result.errors, ...assetRes.errors]) {
             errorLines.push({
               type: 'info',
               content: `  ${err}`,
@@ -420,6 +504,22 @@ export function SitePullScreen({
               </>
             )}
 
+            {/* Show assets summary */}
+            {(assetsToDownload > 0 || assetsUpToDate > 0) && (
+              <Box marginTop={1} flexDirection="column">
+                <Text>Assets:</Text>
+                <Box paddingLeft={2}>
+                  {assetsToDownload > 0 && (
+                    <Text color="green">+ {assetsToDownload} to download ({formatBytes(totalDownloadSize)})</Text>
+                  )}
+                  {assetsToDownload > 0 && assetsUpToDate > 0 && <Text dimColor>, </Text>}
+                  {assetsUpToDate > 0 && (
+                    <Text dimColor>{assetsUpToDate} up-to-date</Text>
+                  )}
+                </Box>
+              </Box>
+            )}
+
             <Box marginTop={1}>
               <Text>
                 <Text color="cyan">Continue with pull?</Text>
@@ -430,9 +530,16 @@ export function SitePullScreen({
           </Box>
         )}
 
-        {screen === 'pulling' && (
+        {screen === 'pulling-pages' && (
           <Box flexDirection="column">
-            <Spinner type="dots" color="cyan" message="Writing pages to disk..." />
+            <Spinner type="dots" color="cyan" message="Pulling pages..." />
+            {renderProgress()}
+          </Box>
+        )}
+
+        {screen === 'pulling-assets' && (
+          <Box flexDirection="column">
+            <Spinner type="dots" color="cyan" message={progress.detail ? `Downloading ${progress.detail}...` : 'Downloading assets...'} />
             {renderProgress()}
           </Box>
         )}

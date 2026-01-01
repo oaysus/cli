@@ -1,11 +1,13 @@
 /**
  * Asset Uploader
  * Uploads local assets to the DAM (Digital Asset Manager)
+ * Also maintains the local assets.json manifest for sync tracking
  */
 
 import fs from 'fs/promises';
 import path from 'path';
 import axios from 'axios';
+import * as crypto from 'crypto';
 import type {
   AssetReference,
   ResolvedAsset,
@@ -14,6 +16,47 @@ import type {
 import { loadCredentials } from '../shared/auth.js';
 import { SSO_BASE_URL, debug } from '../shared/config.js';
 import { resolveAssetPath, getAssetInfo } from './asset-resolver.js';
+import type { AssetManifest, AssetManifestEntry } from './asset-puller.js';
+
+/**
+ * Compute SHA-256 hash of a buffer
+ */
+function computeHash(buffer: Buffer): string {
+  return crypto.createHash('sha256').update(buffer).digest('hex');
+}
+
+/**
+ * Load the assets.json manifest
+ */
+async function loadManifest(projectPath: string): Promise<AssetManifest> {
+  const manifestPath = path.join(projectPath, 'assets', 'assets.json');
+
+  try {
+    const content = await fs.readFile(manifestPath, 'utf-8');
+    return JSON.parse(content);
+  } catch {
+    // Return empty manifest if file doesn't exist
+    return { version: 1, assets: {} };
+  }
+}
+
+/**
+ * Save the assets.json manifest
+ */
+async function saveManifest(projectPath: string, manifest: AssetManifest): Promise<void> {
+  const assetsDir = path.join(projectPath, 'assets');
+
+  // Ensure assets directory exists
+  try {
+    await fs.mkdir(assetsDir, { recursive: true });
+  } catch {
+    // Directory may already exist
+  }
+
+  const manifestPath = path.join(assetsDir, 'assets.json');
+  const content = JSON.stringify(manifest, null, 2);
+  await fs.writeFile(manifestPath, content, 'utf-8');
+}
 
 /**
  * Upload progress callback
@@ -32,6 +75,12 @@ export interface AssetUploadResult {
   r2Url: string;
   /** Full asset info from DAM (includes id, width, height, etc.) */
   assetInfo?: UploadedAssetInfo;
+  /** Content hash for manifest tracking */
+  contentHash?: string;
+  /** Content type */
+  contentType?: string;
+  /** File size in bytes */
+  sizeInBytes?: number;
   success: boolean;
   error?: string;
 }
@@ -63,9 +112,11 @@ export async function uploadAsset(
 
   // Read file and encode as base64
   let fileData: string;
+  let contentHash: string;
   try {
     const buffer = await fs.readFile(assetInfo.absolutePath);
     fileData = buffer.toString('base64');
+    contentHash = computeHash(buffer);
   } catch (error) {
     return {
       localPath: assetRef.localPath,
@@ -117,6 +168,9 @@ export async function uploadAsset(
           alt: damAsset.altText || '',
           assetAlt: damAsset.altText || '',
         },
+        contentHash: damAsset.contentHash || contentHash,
+        contentType: assetInfo.contentType,
+        sizeInBytes: assetInfo.size,
         success: true,
       };
     }
@@ -158,6 +212,7 @@ export async function uploadAsset(
 
 /**
  * Upload multiple assets and return a mapping of local paths to R2 URLs
+ * Also updates the local assets.json manifest to track uploaded assets
  */
 export async function uploadAssets(
   assets: AssetReference[],
@@ -166,6 +221,7 @@ export async function uploadAssets(
     websiteId?: string;
     jwt?: string;
     onProgress?: AssetUploadProgressCallback;
+    updateManifest?: boolean;
   } = {}
 ): Promise<{
   assetMap: Map<string, UploadedAssetInfo>;
@@ -173,6 +229,8 @@ export async function uploadAssets(
   successCount: number;
   errorCount: number;
 }> {
+  const { updateManifest = true } = options;
+
   // Get credentials if not provided
   let websiteId = options.websiteId;
   let jwt = options.jwt;
@@ -201,6 +259,12 @@ export async function uploadAssets(
     }
   }
 
+  // Load existing manifest for updates
+  let manifest: AssetManifest | null = null;
+  if (updateManifest) {
+    manifest = await loadManifest(projectPath);
+  }
+
   // Upload each asset
   const results: AssetUploadResult[] = [];
   const assetMap = new Map<string, UploadedAssetInfo>();
@@ -227,9 +291,27 @@ export async function uploadAssets(
     if (result.success && result.assetInfo) {
       assetMap.set(asset.localPath, result.assetInfo);
       successCount++;
+
+      // Update manifest with uploaded asset
+      if (manifest && result.contentHash) {
+        manifest.assets[filename] = {
+          url: result.r2Url,
+          contentType: result.contentType || 'application/octet-stream',
+          sizeInBytes: result.sizeInBytes || 0,
+          width: result.assetInfo.width,
+          height: result.assetInfo.height,
+          altText: result.assetInfo.alt || undefined,
+          contentHash: result.contentHash,
+        };
+      }
     } else {
       errorCount++;
     }
+  }
+
+  // Save updated manifest
+  if (manifest && successCount > 0) {
+    await saveManifest(projectPath, manifest);
   }
 
   return {

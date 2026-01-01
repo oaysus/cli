@@ -165,6 +165,11 @@ export function resolveAssetPath(
   assetRef: AssetReference,
   projectPath: string
 ): string {
+  // For standalone assets (no pageFile), resolve relative to project root
+  if (!assetRef.pageFile) {
+    return path.resolve(projectPath, assetRef.localPath);
+  }
+
   // Get the directory containing the page file
   const pageDir = path.dirname(path.join(projectPath, assetRef.pageFile));
 
