@@ -17,6 +17,7 @@ import { SwitchScreen } from './screens/SwitchScreen.js';
 import { DeleteScreen } from './screens/DeleteScreen.js';
 import { SiteValidateScreen } from './screens/site/SiteValidateScreen.js';
 import { SitePublishScreen } from './screens/site/SitePublishScreen.js';
+import { SitePullScreen } from './screens/site/SitePullScreen.js';
 import { SiteInitScreen } from './screens/site/SiteInitScreen.js';
 import { App } from './components/App.js';
 import { saveCommandToHistory } from './lib/shared/command-history.js';
@@ -90,6 +91,7 @@ Website Commands
   site init [name]       Create a new website project
   site validate          Validate pages against installed components
   site publish [file?]   Publish all or specific page
+  site pull              Download pages from server to local files
 
 Global Commands
   login                  Authenticate with your Oaysus account
@@ -235,9 +237,18 @@ For more information, visit https://oaysus.com/docs/cli
           }));
           break;
 
+        case 'pull':
+          render(React.createElement(SitePullScreen, {
+            projectPath: '.',
+            force: subArgs.includes('--force') || subArgs.includes('-f'),
+            dryRun: subArgs.includes('--dry-run'),
+            onExit: handleExit
+          }));
+          break;
+
         default:
           console.error(`Unknown site command: ${subCommand || '(none)'}`);
-          console.log('Available: init, validate, publish');
+          console.log('Available: init, validate, publish, pull');
           process.exit(1);
       }
       break;

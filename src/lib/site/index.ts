@@ -8,3 +8,4 @@ export * from './asset-resolver.js';
 export * from './page-validator.js';
 export * from './asset-uploader.js';
 export * from './page-publisher.js';
+export * from './page-puller.js';
