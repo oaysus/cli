@@ -10,6 +10,7 @@ export * from './asset-uploader.js';
 export * from './page-publisher.js';
 export * from './page-puller.js';
 export * from './asset-puller.js';
+export * from './shared-component-resolver.js';
 
 // Selectively export from metadata to avoid conflicts with project-loader
 export {
@@ -24,6 +25,7 @@ export {
   isCatalogStale,
   componentExists,
   findComponent,
+  isDefaultShared,
   getSuggestions,
   loadAssetManifest,
   saveAssetManifest,

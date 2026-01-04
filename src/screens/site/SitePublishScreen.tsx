@@ -189,12 +189,15 @@ export function SitePublishScreen({
     try {
       // Progress callback
       const onProgress = (
-        stage: 'validating' | 'uploading-assets' | 'publishing-pages',
+        stage: 'validating' | 'resolving-shared' | 'uploading-assets' | 'publishing-pages',
         current: number,
         total: number,
         detail?: string
       ) => {
         if (stage === 'validating') {
+          setScreen('validating');
+        } else if (stage === 'resolving-shared') {
+          // Show resolving shared as part of validation phase
           setScreen('validating');
         } else if (stage === 'uploading-assets') {
           setScreen('uploading-assets');

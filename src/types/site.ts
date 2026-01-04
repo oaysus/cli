@@ -43,6 +43,13 @@ export interface ComponentInstance {
   props: Record<string, unknown>;
   /** Component-level settings */
   settings?: Record<string, unknown>;
+  // Shared component fields (for CLI-native shared component support)
+  /** Whether this component should be shared across pages */
+  shared?: boolean;
+  /** Optional name for the shared component */
+  sharedName?: string;
+  /** Global component ID (set after resolution or when pulled from server) */
+  globalId?: string;
 }
 
 /**
@@ -281,6 +288,8 @@ export interface CatalogComponent {
   schema?: ComponentSchema;
   /** Default prop values */
   defaultProps?: Record<string, unknown>;
+  /** Whether this component should be shared by default */
+  defaultShared?: boolean;
 }
 
 /**

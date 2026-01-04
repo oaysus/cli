@@ -27,6 +27,11 @@ const ComponentInstanceSchema = z.object({
   id: z.string().optional(),
   props: z.record(z.string(), z.unknown()).default({}),
   settings: z.record(z.string(), z.unknown()).optional(),
+  // Shared component fields
+  shared: z.boolean().optional(),
+  sharedName: z.string().optional(),
+  globalId: z.string().optional(),
+  isGlobal: z.boolean().optional(),
 });
 
 const SEOSettingsSchema = z.object({

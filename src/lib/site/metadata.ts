@@ -249,6 +249,8 @@ export async function syncComponentCatalog(options: {
         category: comp.category,
         schema: comp.schema,
         defaultProps: comp.defaultProps,
+        // defaultShared from schema - used for shared component resolution
+        defaultShared: comp.defaultShared || false,
       };
 
       themePackMap.get(themePackId)!.components.push(catalogComponent);
@@ -338,6 +340,14 @@ export function findComponent(catalog: ComponentCatalog, componentType: string):
     }
   }
   return null;
+}
+
+/**
+ * Check if a component type should be shared by default
+ */
+export function isDefaultShared(catalog: ComponentCatalog, componentType: string): boolean {
+  const component = findComponent(catalog, componentType);
+  return component?.defaultShared === true;
 }
 
 /**

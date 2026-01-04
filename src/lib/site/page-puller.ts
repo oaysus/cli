@@ -41,6 +41,19 @@ export interface PullResult {
 }
 
 /**
+ * Server component definition (includes global component fields)
+ */
+interface ServerComponent {
+  type: string;
+  id?: string;
+  props: Record<string, unknown>;
+  settings?: Record<string, unknown>;
+  // Global/shared component fields from server
+  isGlobal?: boolean;
+  globalId?: string;
+}
+
+/**
  * API response for a page from the server
  */
 interface ServerPage {
@@ -51,12 +64,7 @@ interface ServerPage {
   description?: string;
   status: string;
   isHomePage: boolean;
-  components: Array<{
-    type: string;
-    id?: string;
-    props: Record<string, unknown>;
-    settings?: Record<string, unknown>;
-  }>;
+  components: ServerComponent[];
   settings?: Record<string, unknown>;
   publishedAt?: string;
   createdAt: string;
@@ -92,15 +100,39 @@ export function slugToFilename(slug: string): string {
 
 /**
  * Convert server page to local PageDefinition format
- * Strips server-only fields
+ * Strips server-only fields but preserves shared component relationships
  */
 function serverPageToLocal(serverPage: ServerPage): PageDefinition {
+  // Map components, preserving shared component info for round-trip
+  const localComponents = (serverPage.components || []).map(comp => {
+    const localComp: Record<string, unknown> = {
+      type: comp.type,
+      props: comp.props,
+    };
+
+    // Preserve optional fields
+    if (comp.id) {
+      localComp.id = comp.id;
+    }
+    if (comp.settings) {
+      localComp.settings = comp.settings;
+    }
+
+    // Preserve shared component info for round-trip support
+    if (comp.isGlobal && comp.globalId) {
+      localComp.shared = true;
+      localComp.globalId = comp.globalId;
+    }
+
+    return localComp;
+  });
+
   return {
     slug: serverPage.slug,
     title: serverPage.title,
     description: serverPage.description,
     isHomePage: serverPage.isHomePage || false,
-    components: serverPage.components || [],
+    components: localComponents as unknown as PageDefinition['components'],
     settings: serverPage.settings || {},
   };
 }

@@ -17,12 +17,14 @@ import { SSO_BASE_URL, debug } from '../shared/config.js';
 import { findAllAssets, replaceAssetPaths } from './asset-resolver.js';
 import { uploadAssets } from './asset-uploader.js';
 import { validateProject } from './page-validator.js';
+import { loadComponentCatalog } from './metadata.js';
+import { resolveSharedComponents } from './shared-component-resolver.js';
 
 /**
  * Publish progress callback
  */
 export type PublishProgressCallback = (
-  stage: 'validating' | 'uploading-assets' | 'publishing-pages',
+  stage: 'validating' | 'resolving-shared' | 'uploading-assets' | 'publishing-pages',
   current: number,
   total: number,
   detail?: string
@@ -371,8 +373,60 @@ export async function publishProject(
     }
   }
 
-  // Find and upload assets
-  const allAssets = findAllAssets(project);
+  // Resolve shared components (creates/links global components)
+  let pagesForPublishing = project.pages;
+  let sharedComponentsCreated = 0;
+  let sharedComponentsExisting = 0;
+
+  if (!options.dryRun) {
+    if (options.onProgress) {
+      options.onProgress('resolving-shared', 0, 1, 'Loading component catalog...');
+    }
+
+    // Load component catalog for defaultShared detection
+    const catalog = await loadComponentCatalog(project.projectPath);
+
+    if (options.onProgress) {
+      options.onProgress('resolving-shared', 0, 1, 'Resolving shared components...');
+    }
+
+    const sharedResult = await resolveSharedComponents({
+      pages: project.pages,
+      websiteId: websiteId!,
+      jwt: jwt!,
+      catalog,
+    });
+
+    if (!sharedResult.success) {
+      return {
+        success: false,
+        pages: [{
+          slug: '',
+          action: 'failed',
+          error: sharedResult.error || 'Failed to resolve shared components',
+        }],
+        assetsUploaded: 0,
+        created: 0,
+        updated: 0,
+        errors: 1,
+      };
+    }
+
+    pagesForPublishing = sharedResult.pages;
+    sharedComponentsCreated = sharedResult.created.length;
+    sharedComponentsExisting = sharedResult.existing.length;
+
+    if (sharedComponentsCreated > 0 || sharedComponentsExisting > 0) {
+      debug(`[Publish] Shared components: ${sharedComponentsCreated} created, ${sharedComponentsExisting} existing`);
+    }
+  }
+
+  // Find and upload assets - use pagesForPublishing which has resolved shared components
+  const projectWithResolvedPages = {
+    ...project,
+    pages: pagesForPublishing,
+  };
+  const allAssets = findAllAssets(projectWithResolvedPages);
   let assetMap = new Map<string, UploadedAssetInfo>();
   let assetsUploaded = 0;
 
@@ -400,17 +454,17 @@ export async function publishProject(
     }
   }
 
-  // Publish pages
+  // Publish pages (using pagesForPublishing which has resolved shared components)
   const pageResults: PublishPageResult[] = [];
   let created = 0;
   let updated = 0;
   let errors = 0;
 
-  for (let i = 0; i < project.pages.length; i++) {
-    const page = project.pages[i];
+  for (let i = 0; i < pagesForPublishing.length; i++) {
+    const page = pagesForPublishing[i];
 
     if (options.onProgress) {
-      options.onProgress('publishing-pages', i + 1, project.pages.length, page.definition.slug);
+      options.onProgress('publishing-pages', i + 1, pagesForPublishing.length, page.definition.slug);
     }
 
     if (options.dryRun) {
