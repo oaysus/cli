@@ -12,6 +12,7 @@ import { DeleteScreen } from '../screens/DeleteScreen.js';
 import { SiteInitScreen } from '../screens/site/SiteInitScreen.js';
 import { SiteValidateScreen } from '../screens/site/SiteValidateScreen.js';
 import { SitePublishScreen } from '../screens/site/SitePublishScreen.js';
+import { SitePullScreen } from '../screens/site/SitePullScreen.js';
 
 type Screen =
   | { type: 'welcome' }
@@ -25,6 +26,7 @@ type Screen =
   | { type: 'site-init'; projectName?: string }
   | { type: 'site-validate'; projectPath?: string }
   | { type: 'site-publish'; projectPath?: string; pageFile?: string; dryRun?: boolean }
+  | { type: 'site-pull'; projectPath?: string; force?: boolean; dryRun?: boolean }
   // Global commands
   | { type: 'login' }
   | { type: 'whoami' }
@@ -176,6 +178,19 @@ export const App: React.FC<AppProps> = ({ initialScreen, onExit }) => {
         <SitePublishScreen
           projectPath={currentScreen.projectPath || '.'}
           pageFile={currentScreen.pageFile}
+          dryRun={currentScreen.dryRun || false}
+          onExit={returnToWelcome}
+          sessionHistory={sessionHistory}
+          addToHistory={addToHistory}
+          removeFromHistory={removeFromHistory}
+        />
+      );
+
+    case 'site-pull':
+      return (
+        <SitePullScreen
+          projectPath={currentScreen.projectPath || '.'}
+          force={currentScreen.force || false}
           dryRun={currentScreen.dryRun || false}
           onExit={returnToWelcome}
           sessionHistory={sessionHistory}

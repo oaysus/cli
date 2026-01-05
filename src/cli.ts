@@ -286,7 +286,7 @@ For more information, visit https://oaysus.com/docs/cli
       console.log('');
       console.log('Available commands:');
       console.log('  oaysus theme <command>  Theme pack commands (init, create, validate, build, push, delete)');
-      console.log('  oaysus site <command>   Website commands (init, validate, publish)');
+      console.log('  oaysus site <command>   Website commands (init, validate, publish, pull)');
       console.log('  oaysus login            Authenticate with Oaysus');
       console.log('  oaysus logout           Clear authentication');
       console.log('  oaysus whoami           Display current user');

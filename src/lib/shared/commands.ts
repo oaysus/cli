@@ -59,6 +59,11 @@ export const COMMANDS: Command[] = [
     description: 'Publish pages to your website',
     group: 'site',
   },
+  {
+    name: 'site pull',
+    description: 'Download pages from server to local files',
+    group: 'site',
+  },
 
   // Global Commands
   {

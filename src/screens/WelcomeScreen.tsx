@@ -25,6 +25,7 @@ type Screen =
   | { type: 'site-init'; projectName?: string }
   | { type: 'site-validate'; projectPath?: string }
   | { type: 'site-publish'; projectPath?: string; pageFile?: string; dryRun?: boolean }
+  | { type: 'site-pull'; projectPath?: string; force?: boolean; dryRun?: boolean }
   // Global commands
   | { type: 'login' }
   | { type: 'whoami' }
@@ -152,7 +153,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNavigate, onExit
       // Theme commands
       'theme init', 'theme create', 'theme validate', 'theme push', 'theme delete',
       // Site commands
-      'site init', 'site validate', 'site publish',
+      'site init', 'site validate', 'site publish', 'site pull',
       // Global commands
       'login', 'whoami', 'logout', 'switch', 'exit'
     ];
@@ -214,6 +215,9 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNavigate, onExit
           break;
         case 'site publish':
           onNavigate({ type: 'site-publish' });
+          break;
+        case 'site pull':
+          onNavigate({ type: 'site-pull' });
           break;
         // Global commands
         case 'login':
