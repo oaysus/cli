@@ -1,6 +1,6 @@
 {
   "name": "@oaysus/cli",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "description": "Oaysus CLI - Professional developer tool for component uploads",
   "type": "module",
   "bin": {

@@ -53,8 +53,8 @@
 Watch how fast you can go from code to a published website with Oaysus.
 
 ```bash
-oaysus init         # Pick your framework. Name your project.
-oaysus push         # Your component builds and deploys in seconds.
+oaysus theme init   # Pick your framework. Name your project.
+oaysus theme push   # Your component builds and deploys in seconds.
 ```
 
 No build pipelines. No complex deployments. Your marketing team creates pages visually, and you get back to building features.
@@ -74,13 +74,13 @@ Requires Node.js 20 or higher.
 oaysus login
 
 # 2. Create a new theme pack project
-oaysus init my-components
+oaysus theme init my-components
 
 # 3. Navigate to the project
 cd my-components
 
 # 4. Push your components to Oaysus
-oaysus push
+oaysus theme push
 ```
 
 That's it. Your components are now available in the visual page builder.
@@ -148,16 +148,39 @@ Marketing edits these props in the visual editor. You never touch the code again
 
 ## Commands
 
+### Theme Pack Commands
+
+Build and manage reusable component libraries.
+
 | Command | Description |
 |---------|-------------|
-| `oaysus init [name]` | Create a new theme pack project |
-| `oaysus create` | Add a component to your project |
-| `oaysus validate` | Validate package structure |
-| `oaysus build` | Build components locally (no upload) |
-| `oaysus push` | Build and upload to Oaysus |
-| `oaysus login` | Authenticate with Oaysus |
-| `oaysus logout` | Clear authentication |
-| `oaysus whoami` | Display current user |
+| `oaysus theme init` | Create a new theme pack project |
+| `oaysus theme create` | Add a component to your theme pack |
+| `oaysus theme validate` | Validate theme pack structure |
+| `oaysus theme push` | Build and upload to Oaysus |
+| `oaysus theme delete` | Delete a theme pack from Oaysus |
+
+### Site Commands
+
+Manage website pages and content.
+
+| Command | Description |
+|---------|-------------|
+| `oaysus site init` | Create a new website project |
+| `oaysus site validate` | Validate pages against installed components |
+| `oaysus site publish` | Publish pages to your website |
+| `oaysus site pull` | Download pages from server to local files |
+
+### Global Commands
+
+Authentication and account management.
+
+| Command | Description |
+|---------|-------------|
+| `oaysus login` | Authenticate with your Oaysus account |
+| `oaysus whoami` | Display current user information |
+| `oaysus switch` | Switch between your websites |
+| `oaysus logout` | Clear authentication tokens |
 
 ## Project Structure
 
