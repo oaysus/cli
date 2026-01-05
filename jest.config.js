@@ -6,6 +6,10 @@ export default {
   // Test environment
   testEnvironment: 'node',
 
+  // Run tests serially to avoid credential file race conditions
+  // Tests that manipulate shared state (credentials.json) need serial execution
+  maxWorkers: 1,
+
   // ESM support
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
 

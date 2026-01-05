@@ -255,24 +255,32 @@ describe('auth-middleware module', () => {
       });
 
       it('should return valid: true for "publish" with valid credentials', async () => {
+        // Save again to ensure we have fresh credentials (avoids race condition with parallel tests)
+        await saveCredentials(createValidCredentials());
         const result = await checkAuthForCommand('publish');
         expect(result.valid).toBe(true);
         expect(result.credentials).toBeDefined();
       });
 
       it('should return valid: true for "switch" with valid credentials', async () => {
+        // Save again to ensure we have fresh credentials (avoids race condition with parallel tests)
+        await saveCredentials(createValidCredentials());
         const result = await checkAuthForCommand('switch');
         expect(result.valid).toBe(true);
         expect(result.credentials).toBeDefined();
       });
 
       it('should return valid: true for "delete" with valid credentials', async () => {
+        // Save again to ensure we have fresh credentials
+        await saveCredentials(createValidCredentials());
         const result = await checkAuthForCommand('delete');
         expect(result.valid).toBe(true);
         expect(result.credentials).toBeDefined();
       });
 
       it('should return credentials with all required fields', async () => {
+        // Save again to ensure we have fresh credentials (avoids race condition with parallel tests)
+        await saveCredentials(createValidCredentials());
         const result = await checkAuthForCommand('push');
         expect(result.valid).toBe(true);
         expect(result.credentials).toBeDefined();
@@ -509,7 +517,7 @@ describe('auth-middleware module', () => {
       });
 
       it.each(authCommands)('should succeed with valid credentials for "%s"', async (command) => {
-        // Clear and save fresh credentials to avoid race condition with parallel tests
+        // Clear and save fresh credentials
         await clearCredentials();
         await saveCredentials(createValidCredentials());
         const result = await checkAuthForCommand(command);

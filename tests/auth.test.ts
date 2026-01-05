@@ -126,7 +126,13 @@ describe('auth module', () => {
     it('should save credentials to the credentials path', async () => {
       const credentials = createValidCredentials();
 
+      // Clear first to avoid race conditions with parallel tests
+      await clearCredentials();
+
       // This saves to the actual CREDENTIALS_PATH, so we just verify it doesn't throw
+      await saveCredentials(credentials);
+
+      // Re-save immediately before load to minimize race window with parallel tests
       await saveCredentials(credentials);
 
       // Verify by loading
@@ -190,7 +196,11 @@ describe('auth module', () => {
       await clearCredentials();
 
       // Save credentials
-      await saveCredentials(createValidCredentials());
+      const testCreds = createValidCredentials();
+      await saveCredentials(testCreds);
+
+      // Re-save immediately before load to minimize race window with parallel tests
+      await saveCredentials(testCreds);
 
       // Load and verify credentials exist (more reliable than stat)
       const loaded = await loadCredentials();
@@ -219,7 +229,10 @@ describe('auth module', () => {
     it('should return true when valid credentials exist', async () => {
       // Clear and save fresh credentials to avoid race conditions
       await clearCredentials();
-      await saveCredentials(createValidCredentials());
+      const testCreds = createValidCredentials();
+      await saveCredentials(testCreds);
+      // Re-save immediately before check to minimize race window with parallel tests
+      await saveCredentials(testCreds);
       const result = await isAuthenticated();
       expect(result).toBe(true);
     });
@@ -254,6 +267,8 @@ describe('auth module', () => {
       // Clear and save fresh credentials
       await clearCredentials();
       const testCreds = createValidCredentials();
+      await saveCredentials(testCreds);
+      // Re-save immediately before requireAuth to minimize race window with parallel tests
       await saveCredentials(testCreds);
 
       const result = await requireAuth();

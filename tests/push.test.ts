@@ -446,6 +446,10 @@ describe('push module - validation tests', () => {
     });
 
     it('should fail when no framework detected', async () => {
+      // Write credentials at start of test to avoid race conditions with parallel tests
+      await fsPromises.mkdir(path.dirname(credPath), { recursive: true });
+      await fsPromises.writeFile(credPath, JSON.stringify(createTestCredentials()));
+
       await fsPromises.writeFile(
         path.join(testDir, 'package.json'),
         JSON.stringify({
@@ -463,6 +467,10 @@ describe('push module - validation tests', () => {
     });
 
     it('should log validation path when silent is false', async () => {
+      // Write credentials at start of test to avoid race conditions with parallel tests
+      await fsPromises.mkdir(path.dirname(credPath), { recursive: true });
+      await fsPromises.writeFile(credPath, JSON.stringify(createTestCredentials()));
+
       await fsPromises.writeFile(
         path.join(testDir, 'package.json'),
         JSON.stringify({ name: 'test', version: '1.0.0' })
