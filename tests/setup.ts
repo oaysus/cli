@@ -1,9 +1,7 @@
 /**
- * Jest Setup File
+ * Jest Test Setup File
  * Runs before each test suite
  */
-
-import { jest, beforeEach } from '@jest/globals';
 
 // Reset environment variables before each test
 beforeEach(() => {
@@ -15,6 +13,3 @@ beforeEach(() => {
   delete process.env.DEVELOPER;
   delete process.env.DEBUG;
 });
-
-// Increase timeout for integration tests
-jest.setTimeout(30000);
