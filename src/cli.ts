@@ -20,10 +20,16 @@ import { SitePublishScreen } from './screens/site/SitePublishScreen.js';
 import { SitePullScreen } from './screens/site/SitePullScreen.js';
 import { SiteInitScreen } from './screens/site/SiteInitScreen.js';
 import { App } from './components/App.js';
+import { TelemetryScreen } from './screens/TelemetryScreen.js';
 import { saveCommandToHistory } from './lib/shared/command-history.js';
 import { push } from './lib/push.js';
 import { switchCommand } from './commands/switch.js';
 import { checkAuthForCommand } from './lib/shared/auth-middleware.js';
+import {
+  initTelemetry,
+  trackCommand,
+  flushEvents,
+} from './lib/shared/telemetry.js';
 
 
 // Get package version function
@@ -52,9 +58,23 @@ async function getVersion(): Promise<string> {
 export async function runCli() {
   const args = process.argv.slice(2);
   const command = args[0];
+  const startTime = Date.now();
 
-  // Handle exit callback
-  const handleExit = () => {
+  // Initialize telemetry and show first-run notice if needed
+  const telemetryStatus = await initTelemetry();
+  if (telemetryStatus.showNotice) {
+    console.log('\nOaysus CLI collects anonymous usage data to help improve the tool.');
+    console.log('Run `oaysus telemetry disable` to opt out.\n');
+  }
+
+  // Handle exit callback with telemetry flush
+  const handleExit = async () => {
+    // Track command completion
+    if (command && command !== 'telemetry') {
+      const durationMs = Date.now() - startTime;
+      await trackCommand(command, { success: true, durationMs });
+      await flushEvents();
+    }
     process.exit(0);
   };
 
@@ -98,6 +118,7 @@ Global Commands
   logout                 Clear authentication tokens
   whoami                 Display current user information
   switch                 Switch between your websites
+  telemetry <action>     Manage telemetry (status, enable, disable)
 
 Options
   --help, -h             Show this help message
@@ -281,6 +302,21 @@ For more information, visit https://oaysus.com/docs/cli
       }
       break;
 
+    case 'telemetry': {
+      const action = args[1] as 'status' | 'enable' | 'disable';
+      if (!action || !['status', 'enable', 'disable'].includes(action)) {
+        console.error('Usage: oaysus telemetry <status|enable|disable>');
+        console.log('');
+        console.log('Available actions:');
+        console.log('  status   Show current telemetry status');
+        console.log('  enable   Enable telemetry');
+        console.log('  disable  Disable telemetry');
+        process.exit(1);
+      }
+      render(React.createElement(TelemetryScreen, { action, onExit: handleExit }));
+      break;
+    }
+
     default:
       console.error(`Unknown command: ${command}`);
       console.log('');
@@ -291,8 +327,18 @@ For more information, visit https://oaysus.com/docs/cli
       console.log('  oaysus logout           Clear authentication');
       console.log('  oaysus whoami           Display current user');
       console.log('  oaysus switch           Switch websites');
+      console.log('  oaysus telemetry        Manage telemetry settings');
       console.log('');
       console.log('Run "oaysus --help" for more information');
+
+      // Track unknown command
+      await trackCommand(command, {
+        success: false,
+        errorType: 'UnknownCommand',
+        errorMessage: `Unknown command: ${command}`,
+      });
+      await flushEvents();
+
       process.exit(1);
   }
 }

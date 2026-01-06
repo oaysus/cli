@@ -182,6 +182,18 @@ Authentication and account management.
 | `oaysus switch` | Switch between your websites |
 | `oaysus logout` | Clear authentication tokens |
 
+### Telemetry Commands
+
+Manage anonymous usage analytics.
+
+| Command | Description |
+|---------|-------------|
+| `oaysus telemetry status` | Show current telemetry status |
+| `oaysus telemetry enable` | Enable anonymous usage tracking |
+| `oaysus telemetry disable` | Disable anonymous usage tracking |
+
+Oaysus CLI collects anonymous usage data to help improve the tool. No personal data, file contents, or source code is collected. You can also disable telemetry via the `OAYSUS_TELEMETRY_DISABLED=1` environment variable.
+
 ## Project Structure
 
 ```
