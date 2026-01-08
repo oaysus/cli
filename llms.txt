@@ -11,6 +11,7 @@ The Oaysus CLI enables developers to create reusable UI components, bundle them 
 - [Site Commands](./docs/site-commands.md): Managing website pages locally
 - [Component Guide](./docs/components.md): Building components in React, Vue, and Svelte
 - [Schema Reference](./docs/schemas.md): Complete prop type reference
+- [Build Configuration](./docs/build-configuration.md): Customizing the build process and Tailwind
 - [AI Workflows](./docs/ai-workflows.md): Using CLI with AI assistants for bulk content editing
 
 ## Installation

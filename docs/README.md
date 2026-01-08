@@ -11,6 +11,7 @@ This folder contains detailed documentation for the Oaysus CLI tool.
 | [Site Commands](./site-commands.md) | Managing website pages and content |
 | [Component Guide](./components.md) | Building components with schemas |
 | [Schema Reference](./schemas.md) | Complete prop type reference |
+| [Build Configuration](./build-configuration.md) | Customizing the build process |
 | [AI Workflows](./ai-workflows.md) | Using the CLI with AI assistants |
 
 ## Quick Links
