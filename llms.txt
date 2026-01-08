@@ -1,0 +1,94 @@
+# Oaysus CLI
+
+> Command-line tool for building and pushing components to the Oaysus visual page builder platform. Supports React, Vue, and Svelte.
+
+The Oaysus CLI enables developers to create reusable UI components, bundle them into theme packs, and push them to the cloud where marketing teams can use them in a visual page builder. It also supports local page management for version control and AI-assisted content workflows.
+
+## Documentation
+
+- [Getting Started](./docs/getting-started.md): Installation and quick start guide
+- [Theme Pack Commands](./docs/theme-commands.md): Building and managing component libraries
+- [Site Commands](./docs/site-commands.md): Managing website pages locally
+- [Component Guide](./docs/components.md): Building components in React, Vue, and Svelte
+- [Schema Reference](./docs/schemas.md): Complete prop type reference
+- [AI Workflows](./docs/ai-workflows.md): Using CLI with AI assistants for bulk content editing
+
+## Installation
+
+```bash
+npm install -g @oaysus/cli
+```
+
+Requires Node.js 20 or higher.
+
+## Quick Start
+
+```bash
+oaysus login                    # Authenticate with your account
+oaysus theme init my-components # Create a new theme pack
+cd my-components
+oaysus theme push               # Push components to Oaysus
+```
+
+## Command Reference
+
+### Theme Pack Commands
+
+- `oaysus theme init [name]` - Create a new theme pack project with React, Vue, or Svelte
+- `oaysus theme create [name]` - Add a new component to your theme pack
+- `oaysus theme validate` - Validate theme pack structure and schemas
+- `oaysus theme build` - Build components locally without uploading
+- `oaysus theme push` - Build and upload components to Oaysus
+- `oaysus theme delete [name]` - Delete a theme pack from Oaysus
+
+### Site Commands
+
+- `oaysus site init [name]` - Create a website project for local page management
+- `oaysus site validate` - Validate pages against installed components
+- `oaysus site publish [file?]` - Publish pages from local JSON files
+- `oaysus site pull` - Download pages from server to local files
+
+### Global Commands
+
+- `oaysus login` - Authenticate via magic link
+- `oaysus switch` - Switch between your websites
+- `oaysus logout` - Clear stored credentials
+- `oaysus whoami` - Show current user and session info
+- `oaysus telemetry status|enable|disable` - Manage anonymous usage analytics
+
+## Component Structure
+
+Each component requires two files:
+
+```
+components/
+└── Hero/
+    ├── index.tsx     # Component code (React/Vue/Svelte)
+    └── schema.json   # Editable props definition
+```
+
+## Schema Types
+
+- `string` - Single line text input
+- `text` - Multi-line textarea
+- `number` - Numeric value with optional min/max/step
+- `boolean` - True/false toggle
+- `color` - Hex color picker
+- `image` - Image from media library
+- `array` - Repeatable list of items
+- `select` - Dropdown with options
+
+## Framework Support
+
+- React (JSX/TSX with hooks)
+- Vue 3 (Single File Components)
+- Svelte (native .svelte files)
+
+Framework is auto-detected from package.json dependencies.
+
+## Optional
+
+- [Contributing](./CONTRIBUTING.md): Development setup and contribution guidelines
+- [GitHub Repository](https://github.com/oaysus/cli): Source code and issues
+- [npm Package](https://www.npmjs.com/package/@oaysus/cli): Published package
+- [Full Documentation](https://oaysus.com/docs): Complete platform documentation

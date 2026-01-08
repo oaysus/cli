@@ -1,7 +1,7 @@
 {
   "name": "@oaysus/cli",
-  "version": "0.1.16",
-  "description": "Oaysus CLI - Professional developer tool for component uploads",
+  "version": "0.1.17",
+  "description": "Build React, Vue, or Svelte components and push them to a visual page builder. Empower marketing teams to create pages without code.",
   "type": "module",
   "bin": {
     "oaysus": "./bin/oaysus.js"
@@ -11,7 +11,9 @@
   "files": [
     "dist",
     "bin",
-    "src/templates"
+    "docs",
+    "src/templates",
+    "llms.txt"
   ],
   "scripts": {
     "build": "tsc",
@@ -84,7 +86,21 @@
     "oaysus",
     "cli",
     "components",
-    "developer-tools"
+    "developer-tools",
+    "page-builder",
+    "visual-editor",
+    "cms",
+    "headless-cms",
+    "react-components",
+    "vue-components",
+    "svelte-components",
+    "landing-pages",
+    "marketing-pages",
+    "no-code",
+    "low-code",
+    "theme-pack",
+    "component-library",
+    "website-builder"
   ],
   "author": "Oaysus Team",
   "license": "MIT",
